@@ -1,0 +1,52 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "fastapi_permissions"
+author = "Holger Frey"
+author-email = "mail@holgerfrey.de"
+home-page = "https://github.com/holgi/fastapi-permissions"
+description-file = "README.md"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+]
+requires = [
+    "fastapi >= 0.33.0",
+]
+requires-python = ">=3.6"
+
+[tool.flit.metadata.requires-extra]
+test = [
+    "black",
+    "flake8",
+    "flake8-comprehensions",
+    "pytest >=4.0.0",
+    "pytest-cov",
+    "tox"
+]
+dev = [
+    "pyjwt",
+    "passlib[bcrypt]",
+    "fastapi[all]",
+]
+
+[tool.black]
+line-length = 79
+py37 = true
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''

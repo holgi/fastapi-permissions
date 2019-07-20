@@ -13,7 +13,7 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 
 # import of the new "permission" module for row level permissions
 
-from permissions import (
+from fastapi_permissions import (
     Allow,
     Authenticated,
     Context,

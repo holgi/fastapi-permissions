@@ -1,3 +1,7 @@
+"flit needs a dockstring..."
+
+__version__ = "0.0.1"
+
 from fastapi import Depends, HTTPException
 from starlette.status import HTTP_403_FORBIDDEN
 
@@ -14,7 +18,7 @@ All = "*ALL*"  # constant: permission wildcard
 Everyone = "sys:everyone"  #  constant: user principal for everyone
 Authenticated = "sys:authenticated"  #  constant: authenticated user principal
 
-DENY_ALL = (Deny, Everyone, All)   # constant: acl shorthand, deny anything
+DENY_ALL = (Deny, Everyone, All)  # constant: acl shorthand, deny anything
 ALOW_ALL = (Allow, Everyone, All)  # constant: acl shorthand, allow everything
 
 # the exception that will be raised, if no sufficient permissions are found
