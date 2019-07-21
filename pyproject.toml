@@ -10,8 +10,8 @@ home-page = "https://github.com/holgi/fastapi-permissions"
 description-file = "README.md"
 classifiers = [
     "Development Status :: 4 - Beta",
-    "Framework :: AsyncIO",
     "Intended Audience :: Developers",
+    "License :: Freely Distributable",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3 :: Only",
@@ -29,7 +29,8 @@ test = [
     "flake8-comprehensions",
     "pytest >=4.0.0",
     "pytest-cov",
-    "tox"
+    "pytest-mock",
+    "tox",
 ]
 dev = [
     "pyjwt",
