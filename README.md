@@ -58,7 +58,7 @@ The example is derived from the FastApi examples, so it should be familiar. New 
 Concepts
 --------
 
-Since this is heavely derived from the [Pyramid][] framework, I strongly suggest to take a look at its [security documentation][] if you anything is unclear.
+Since this is heavely derived from the [Pyramid][] framework, I strongly suggest to take a look at its [security documentation][pyramid_security] if you anything is unclear.
 
 The system depends on a couple of concepts not found in FastAPI:
 
@@ -123,7 +123,7 @@ class UserPrincipalsMethod:
 
 There are two special principals that also help providing access controll lists: ```Everyone``` and ```Authenticated```. 
 
-If a user object doesn't provide principals (no property or empty list), the user is considered to be *not logged in*.
+If a user object doesn't provide principals (no "principals" attribute or empty list), the user is considered to be *not logged in*.
 
 The ```Everyone``` principal is added regardless of any other defined principals or login status, ```Authenticated``` is only added for a user that is logged in.
 
@@ -254,14 +254,16 @@ print(list_permissions(user_john, apple_resouce))
 {"permissions:*": True}
 ```
 
+Please note, that ```"permissions:*"``` is the string representation of ```fastapi_permissions.All```.
+
 How it works
 ============
 
 The main work is done in the ```has_permissions()``` function, but the most interesting ones (at least for me) are the ```configure_permissions()``` and ```permission_dependency_factory()``` functions. 
 
-Wait. I didn't tell you about the latter one? Ok,
+Wait. I didn't tell you about the latter one?
 
-The ```permission()``` thingy used in the path operation definition before is actually the ```permission_dependency_factory()``` mentioned before. The ```configure_permissions()``` function just provisiones it with some default values using ```functools.partial```. This reduces the function signature from  ```permission_dependency_factory(permission, resource, current_user_func, grant_class, permission_exception)``` down to ```partial_function(permission, resource)```.
+The ```permission()``` thingy used in the path operation definition before is actually the mentioned ```permission_dependency_factory()``` . The ```configure_permissions()``` function just provisiones it with some default values using ```functools.partial```. This reduces the function signature from  ```permission_dependency_factory(permission, resource, current_user_func, grant_class, permission_exception)``` down to ```partial_function(permission, resource)```.
 
 The ```permission_dependency_factory``` returns another function with the signature ```permission_dependency(Depends(resource), Depends(current_user_func))```. This is the acutal signature, that ```Depends()``` uses in the path operation definition to search and inject the dependencies. The rest is just some closure magic ;-).
 
