@@ -69,7 +69,7 @@ The system depends on a couple of concepts not found in FastAPI:
 
 ### resources & access controll lists
 
-A resource provides an access controll list via it's ```__acl__``` attribute. It can either be an property of an object or a callable. Each entry in the list is a tuple containing three values: 
+A resource provides an access controll list via it's ```__acl__``` attribute. It can either be an property of an object or a callable. Each entry in the list is a tuple containing three values:
 
 1. an action: ```fastapi_permissions.Allow``` or ```fastapi_permissions.Deny```
 2. a principal: e.g. "role:admin" or "user:bob"
@@ -85,7 +85,7 @@ class StaticAclResource:
 		(Allow, Everyone, "view"),
         (Allow, "role:user", "share")
     ]
-    
+
 class DynamicAclResource:
     def __acl__(self):
         return [
@@ -121,7 +121,7 @@ class UserPrincipalsMethod:
 
 #### special principals
 
-There are two special principals that also help providing access controll lists: ```Everyone``` and ```Authenticated```. 
+There are two special principals that also help providing access controll lists: ```Everyone``` and ```Authenticated```.
 
 If a user object doesn't provide principals (no "principals" attribute or empty list), the user is considered to be *not logged in*.
 
@@ -177,7 +177,7 @@ def get_current_user(...):
 
 permission = configure_permissions(
     get_current_user,
-	grant_class,
+    grant_class,
     permission_exception
 
 )
@@ -196,7 +196,7 @@ def get_current_user(...):
     ...
 
 example_acl = [(Allow "role:user", "view")]
-    
+
 permission = configure_permissions(get_current_user)
 
 @app.get("/")
@@ -218,7 +218,7 @@ def get_current_user(...):
 def get_item(item_id: int):
     """ returns a resource from the database """
     ...
-    
+
 permission = configure_permissions(get_current_user)
 
 @app.get("/item/{item_id}")
@@ -259,11 +259,11 @@ Please note, that ```"permissions:*"``` is the string representation of ```fasta
 How it works
 ============
 
-The main work is done in the ```has_permissions()``` function, but the most interesting ones (at least for me) are the ```configure_permissions()``` and ```permission_dependency_factory()``` functions. 
+The main work is done in the ```has_permissions()``` function, but the most interesting ones (at least for me) are the ```configure_permissions()``` and ```permission_dependency_factory()``` functions.
 
 Wait. I didn't tell you about the latter one?
 
-The ```permission()``` thingy used in the path operation definition before is actually the mentioned ```permission_dependency_factory()``` . The ```configure_permissions()``` function just provisiones it with some default values using ```functools.partial```. This reduces the function signature from  ```permission_dependency_factory(permission, resource, current_user_func, grant_class, permission_exception)``` down to ```partial_function(permission, resource)```.
+The ```permission()``` thingy used in the path operation definition before is actually the mentioned ```permission_dependency_factory()```. The ```configure_permissions()``` function just provisiones it with some default values using ```functools.partial```. This reduces the function signature from  ```permission_dependency_factory(permission, resource, current_user_func, grant_class, permission_exception)``` down to ```partial_function(permission, resource)```.
 
 The ```permission_dependency_factory``` returns another function with the signature ```permission_dependency(Depends(resource), Depends(current_user_func))```. This is the acutal signature, that ```Depends()``` uses in the path operation definition to search and inject the dependencies. The rest is just some closure magic ;-).
 
