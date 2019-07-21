@@ -41,13 +41,13 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # <<<
 
 fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
+    "bob": {
+        "username": "bob",
+        "full_name": "Bobby Bob",
+        "email": "bob@example.com",
         "hashed_password": pwd_context.hash("secret"),
         # >>> THIS IS NEW
-        "principals": ["user:johndoe", "role:admin"],
+        "principals": ["user:bob", "role:admin"],
         # <<<
     },
     "alice": {
@@ -155,7 +155,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 # a fake database for some cheesy items
 
 fake_items_db = {
-    1: {"name": "Stilton", "owner": "johndoe"},
+    1: {"name": "Stilton", "owner": "bob"},
     2: {"name": "Danish Blue", "owner": "alice"},
 }
 
@@ -245,7 +245,7 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 # exception will be raised
 
 # permission result for the fake users:
-# - johndoe: granted
+# - bob: granted
 # - alice: granted
 
 
@@ -267,7 +267,7 @@ async def show_items(
 
 
 # permission result for the fake users:
-# - johndoe: DENIED
+# - bob: DENIED
 # - alice: DENIED
 
 
@@ -280,7 +280,7 @@ async def add_items(grant: Grant = Depends(permission("create", NewItemAcl))):
 # a dependable can be used. This way, we can easily acces database entries
 
 # permission result for the fake users:
-# - johndoe: item 1: granted, item 2: granted
+# - bob: item 1: granted, item 2: granted
 # - alice: item 1: granted, item 2: granted
 
 
@@ -290,7 +290,7 @@ async def show_item(grant: Grant = Depends(permission("view", get_item))):
 
 
 # permission result for the fake users:
-# - johndoe: item 1: granted, item 2: granted
+# - bob: item 1: granted, item 2: granted
 # - alice: item 1: DENIED, item 2: granted
 
 

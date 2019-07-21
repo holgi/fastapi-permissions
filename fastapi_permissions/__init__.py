@@ -9,9 +9,27 @@ extremely simple and incomplete example:
     from fastapi import Depends, FastAPI
     from fastapi.security import OAuth2PasswordBearer
     from fastapi_permissions import configure_permissions, Allow, Deny, Grant
+    from pydantic import BaseModel
 
     app = FastAPI()
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
+    class Item(BaseModel):
+        name: str
+        owner: str
+
+        def __acl__(self):
+            return [
+                (Allow, Authenticated, "view"),
+                (Allow, "role:admin", "edit"),
+                (Allow, f"user:{self.owner}", "delete"),
+            ]
+
+    class User(BaseModel):
+        name: str
+
+        def principals(self):
+            return [f"user:{self.name}"]
 
     def get_current_user(token: str = Depends(oauth2_scheme)):
         ...
@@ -21,9 +39,9 @@ extremely simple and incomplete example:
 
     permissions = configure_permissions(get_current_user)
 
-    @app.get("/item/{item_id}")
-    async def show_item(context:Grant=Depends(permission("view", get_item))):
-        return [{"item": context.resource, "user": context.user.username}]
+    @app.get("/item/{item_identifier}")
+    async def show_item(grant:Grant=Depends(permission("view", get_item))):
+        return [{"item": grant.resource, "user": grant.user.name}]
 """
 
 __version__ = "0.0.1"
