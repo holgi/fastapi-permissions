@@ -96,3 +96,15 @@ def test_normalize_acl_with_acl_method():
     resource = DummyResource(lambda: "acl definition")
 
     assert normalize_acl(resource) == "acl definition"
+
+
+def test_normalize_acl_attribute_takes_precedence():
+    """ test for resource with an __acl__ attribute that are also iterables """
+    from fastapi_permissions import normalize_acl
+
+    class DummyList(list):
+        __acl__ = "acl definition"
+
+    resource = DummyList()
+
+    assert normalize_acl(resource) == "acl definition"

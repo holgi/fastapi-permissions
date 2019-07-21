@@ -8,6 +8,10 @@ def dummy_user_callable():
     pass
 
 
+def dummy_resource_callable():
+    pass
+
+
 class DummyUser:
     def __init__(self, principals):
         self.principals = principals
@@ -146,9 +150,6 @@ def test_permission_dependency_factory_wraps_callable_resource(mocker):
 
     from fastapi_permissions import permission_dependency_factory, Depends
 
-    def dummy_resource_callable():
-        pass
-
     permission_dependency_factory(
         "view",
         dummy_resource_callable,
@@ -161,7 +162,7 @@ def test_permission_dependency_factory_wraps_callable_resource(mocker):
     assert Depends.call_args == mocker.call(dummy_resource_callable)
 
 
-def test_permission_dependency_factory_nowrap_noncallable_resource(mocker):
+def test_permission_dependency_factory_wraps_noncallable_resource(mocker):
     mocker.patch("fastapi_permissions.Depends")
 
     from fastapi_permissions import permission_dependency_factory, Depends
@@ -174,17 +175,18 @@ def test_permission_dependency_factory_nowrap_noncallable_resource(mocker):
         "permisssion_exception",
     )
 
-    assert Depends.call_count == 0
+    assert Depends.call_count == 1
+    assert Depends.call_args != mocker.call("dummy_resource")
 
 
 def test_permission_dependency_factory_returns_correct_signature(mocker):
     mocker.patch("fastapi_permissions.Depends")
 
-    from fastapi_permissions import permission_dependency_factory
+    from fastapi_permissions import permission_dependency_factory, Depends
 
     permission_func = permission_dependency_factory(
         "view",
-        "dummy_resource",
+        dummy_resource_callable,
         "current_user_func",
         "grant_class",
         "permisssion_exception",
@@ -192,18 +194,24 @@ def test_permission_dependency_factory_returns_correct_signature(mocker):
     parameters = inspect.signature(permission_func).parameters
 
     assert len(parameters) == 2
-    assert parameters["resource"].default == "dummy_resource"
+    assert parameters["resource"].default == Depends(dummy_resource_callable)
     assert parameters["user"].default == "current_user_func"
 
 
 def test_permission_dependency_returns_grant(mocker):
     """ If a user has a permission, a grant should be returned """
     mocker.patch("fastapi_permissions.has_permission", return_value=True)
-    from fastapi_permissions import permission_dependency_factory, Grant
+    mocker.patch("fastapi_permissions.Depends")
+
+    from fastapi_permissions import (
+        permission_dependency_factory,
+        Grant,
+        Depends,
+    )
 
     permission_func = permission_dependency_factory(
         "view",
-        "dummy_resource",
+        dummy_resource_callable,
         "current_user_func",
         Grant,
         "permisssion_exception",
@@ -213,12 +221,13 @@ def test_permission_dependency_returns_grant(mocker):
     assert isinstance(result, Grant)
     print(result)
     assert result.user == "current_user_func"
-    assert result.resource == "dummy_resource"
+    assert result.resource == Depends(dummy_resource_callable)
 
 
 def test_permission_dependency_raises_exception(mocker):
     """ If a user dosen't have a permission, a exception should be raised """
     mocker.patch("fastapi_permissions.has_permission", return_value=False)
+
     from fastapi_permissions import (
         permission_dependency_factory,
         permission_exception,
@@ -227,7 +236,7 @@ def test_permission_dependency_raises_exception(mocker):
 
     permission_func = permission_dependency_factory(
         "view",
-        "dummy_resource",
+        dummy_resource_callable,
         "current_user_func",
         "grant_class",
         permission_exception,

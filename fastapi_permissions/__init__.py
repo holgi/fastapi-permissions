@@ -129,6 +129,8 @@ def permission_dependency_factory(
     """
     if callable(resource):
         resource = Depends(resource)
+    else:
+        resource = Depends(lambda: resource)
 
     # to get the caller signature right, we need to add only the resource and
     # user dependable in the definition
@@ -160,7 +162,6 @@ def has_permission(user: Any, requested_permission: str, resource: Any):
             permissions = {permissions}
         if requested_permission in permissions:
             if principal in user_principals:
-                print(action, permissions, principal)
                 return action == Allow
     return False
 
@@ -213,12 +214,14 @@ def normalize_acl(resource: Any):
     attribute. If the "__acl__" attribute is a callable, it will be called and
     the result of the call returned.
     """
-    if is_like_list(resource):
-        return resource
-    acl = getattr(resource, "__acl__", [])
+    acl = getattr(resource, "__acl__", None)
     if callable(acl):
-        acl = acl()
-    return acl
+        return acl()
+    elif acl is not None:
+        return acl
+    elif is_like_list(resource):
+        return resource
+    return []
 
 
 def is_like_list(something):

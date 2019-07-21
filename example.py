@@ -193,6 +193,7 @@ class ItemListResource:
 
 
 # you can even use just a list
+
 NewItemAcl = [(Allow, Authenticated, "view")]
 
 
@@ -271,9 +272,7 @@ async def show_items(
 
 
 @app.get("/item/add")
-async def add_items(
-    grant: Grant = Depends(permission("create", NewItemAcl))
-):
+async def add_items(grant: Grant = Depends(permission("create", NewItemAcl))):
     return [{"items": "I can haz cheese?", "user": grant.user.username}]
 
 
