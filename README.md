@@ -267,6 +267,8 @@ The ```permission()``` thingy used in the path operation definition before is ac
 
 The ```permission_dependency_factory``` returns another function with the signature ```permission_dependency(Depends(resource), Depends(current_user_func))```. This is the acutal signature, that ```Depends()``` uses in the path operation definition to search and inject the dependencies. The rest is just some closure magic ;-).
 
+Or in other words: to have a nice API, the ```Depends()``` in the path operation function should only have a function signature for retrieving the active user and the resource. On the other side, when writing the code, I wanted to only specifiy the parts relevant to the path operation function: the resource and the permission. The rest is just on how to make it work.
+
 Dev & Test virtual environment
 ------------------------------
 
