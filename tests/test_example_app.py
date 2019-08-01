@@ -54,14 +54,6 @@ def test_get_me(username, client):
     assert data["username"] == username
 
 
-@pytest.mark.parametrize("username", ["alice", "bob"])
-def test_get_me(username, client):
-    response = get_with_user("/me/", username, client)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["username"] == username
-
-
 @pytest.mark.parametrize(
     "url, username, granted",
     [

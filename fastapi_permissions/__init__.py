@@ -49,12 +49,10 @@ __version__ = "0.1.0"
 from fastapi import Depends, HTTPException
 from starlette.status import HTTP_403_FORBIDDEN
 
-
-import collections
 import functools
 import itertools
 
-from typing import Any, Type
+from typing import Any
 
 # constants
 

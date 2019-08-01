@@ -133,8 +133,7 @@ def test_configure_permissions_parameters(mocker):
     from fastapi_permissions import configure_permissions
 
     partial_func = configure_permissions(
-        dummy_user_callable,
-        permission_exception="exception option",
+        dummy_user_callable, permission_exception="exception option"
     )
     parameters = inspect.signature(partial_func).parameters
 
@@ -163,10 +162,7 @@ def test_permission_dependency_factory_wraps_noncallable_resource(mocker):
     from fastapi_permissions import permission_dependency_factory, Depends
 
     permission_dependency_factory(
-        "view",
-        "dummy_resource",
-        "current_user_func",
-        "permisssion_exception",
+        "view", "dummy_resource", "current_user_func", "permisssion_exception"
     )
 
     assert Depends.call_count == 1
@@ -192,14 +188,11 @@ def test_permission_dependency_factory_returns_correct_signature(mocker):
 
 
 def test_permission_dependency_returns_requested_resource(mocker):
-    """ If a user has a permission, the requested resource should be returned """
+    """ If a user has a permission, the resource should be returned """
     mocker.patch("fastapi_permissions.has_permission", return_value=True)
     mocker.patch("fastapi_permissions.Depends")
 
-    from fastapi_permissions import (
-        permission_dependency_factory,
-        Depends,
-    )
+    from fastapi_permissions import permission_dependency_factory, Depends
 
     permission_func = permission_dependency_factory(
         "view",

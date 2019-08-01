@@ -49,8 +49,8 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 
 lint: ## check style with flake8
-	black fastapi_permissions tests example.py
-	flake8 fastapi_permissions tests example.py
+	flake8 fastapi_permissions tests
+	black fastapi_permissions tests
 
 test: ## run tests quickly with the default Python
 	pytest tests -x --disable-warnings
