@@ -94,10 +94,6 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-
 def get_user(db, username: str):
     if username in db:
         user_dict = db[username]
@@ -119,12 +115,9 @@ def authenticate_user(fake_db, username: str, password: str):
     return user
 
 
-def create_access_token(*, data: dict, expires_delta: timedelta = None):
+def create_access_token(*, data: dict, expires_delta: timedelta):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+    expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -226,7 +219,7 @@ async def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/users/me/", response_model=User)
+@app.get("/me/", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
 
@@ -250,7 +243,7 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 @app.get("/items/")
 async def show_items(
     ilr: ItemListResource = Depends(permission("view", ItemListResource)),
-    user = depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     available_permissions = {
         index: list_permissions(user, get_item(index))

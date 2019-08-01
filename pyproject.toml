@@ -30,6 +30,7 @@ test = [
     "pytest >=4.0.0",
     "pytest-cov",
     "pytest-mock",
+    "pytest-asyncio",
     "tox",
 ]
 dev = [
