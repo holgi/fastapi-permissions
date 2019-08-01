@@ -16,7 +16,6 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 from fastapi_permissions import (
     Allow,
     Authenticated,
-    Grant,
     configure_permissions,
     list_permissions,
 )
@@ -238,8 +237,7 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 # This function call will return a function that acts as a dependable
 
 # If the currently logged in user has the permission "view" for the
-# ItemListResource, a Grant (named tuple) will be returned that contains
-# the resource, the user and the permission
+# ItemListResource, the resource will be returned
 
 # If the user does not have the proper permission, a HTTP_401_UNAUTHORIZED
 # exception will be raised
@@ -251,17 +249,17 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 
 @app.get("/items/")
 async def show_items(
-    grant: Grant = Depends(permission("view", ItemListResource))
+    ilr: ItemListResource = Depends(permission("view", ItemListResource)),
+    user = depends(get_current_user)
 ):
     available_permissions = {
-        index: list_permissions(grant.user, get_item(index))
+        index: list_permissions(user, get_item(index))
         for index in fake_items_db
     }
     return [
         {
             "items": fake_items_db,
             "available_permissions": available_permissions,
-            "user": grant.user.username,
         }
     ]
 
@@ -272,8 +270,8 @@ async def show_items(
 
 
 @app.get("/item/add")
-async def add_items(grant: Grant = Depends(permission("create", NewItemAcl))):
-    return [{"items": "I can haz cheese?", "user": grant.user.username}]
+async def add_items(acls: list = Depends(permission("create", NewItemAcl))):
+    return [{"items": "I can haz cheese?"}]
 
 
 # here is the second interesting thing: instead of using a resource class,
@@ -285,8 +283,8 @@ async def add_items(grant: Grant = Depends(permission("create", NewItemAcl))):
 
 
 @app.get("/item/{item_id}")
-async def show_item(grant: Grant = Depends(permission("view", get_item))):
-    return [{"item": grant.resource, "user": grant.user.username}]
+async def show_item(item: Item = Depends(permission("view", get_item))):
+    return [{"item": item}]
 
 
 # permission result for the fake users:
@@ -295,8 +293,8 @@ async def show_item(grant: Grant = Depends(permission("view", get_item))):
 
 
 @app.get("/item/{item_id}/use")
-async def use_item(grant: Grant = Depends(permission("use", get_item))):
-    return [{"item": grant.resource, "user": grant.user.username}]
+async def use_item(item: Item = Depends(permission("use", get_item))):
+    return [{"item": item}]
 
 
 # <<<
