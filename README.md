@@ -3,6 +3,7 @@ Row Level Permissions for FastAPI
 
 While trying out the excellent [FastApi][] framework there was one peace missing for me: an easy, declarative way to define permissions of users (and roles/groups) on resources. Since I reall love the way [Pyramid][] handles this, I re-implemented and adapted the system for FastApi (well, you might call it a blatant rip-off).
 
+
 An extremely simple and incomplete example:
 -------------------------------------------
 
@@ -35,10 +36,13 @@ class User(BaseModel):
 def get_current_user(token: str = Depends(oauth2_scheme)):
     ...
 
+def get_active_user_principals(user:User = Depends(get_current_user)):
+    ...
+
 def get_item(item_identifier):
     ...
 
-permissions = configure_permissions(get_current_user)
+permissions = configure_permissions(get_active_user_principals)
 
 @app.get("/item/{item_identifier}")
 async def show_item(item: Item=Depends(permission("view", get_item))):
@@ -48,17 +52,33 @@ async def show_item(item: Item=Depends(permission("view", get_item))):
 For a better example install ```fastapi_permissions``` source in an virtual environment (see further below), and start a test server:
 
 ```
-(permissions) $ uvicorn example:app --reload
+(permissions) $ uvicorn fastapi_permissions.example:app --reload
 ```
 
 Visit <http://127.0.0.1:8000/docs> to try it out. There are two users available: "bob" and "alice", both have the password "secret".
 
-The example is derived from the FastApi examples, so it should be familiar. New / added stuff is marked with comments.
+The example is derived from the FastApi examples, so it should be familiar. New / added stuff is marked with comments in the source file `fastapi_permissions/example.py`
+
+
+Why not use Scopes?
+-------------------
+
+For most applications the use of [scopes][] to determine the rights of a user is sufficient enough. So if scopes fit your application, please use them - they are already a part of the FastAPI framework.
+
+While scopes are tied only to the state of the user, `fastapi_permissions` also
+take the state of the requested resource into account.
+
+Let's take an scientific  paper as an example: depending on the state of the submission process (like "draft", "submitted", "peer review" or "published") different users should have different permissions on viewing, editing or retracting. This could be acomplished with custom code in the path definition functions, but `fastapi_permissions` offers a method to define these constraints in a single place.
+
+There is a second case, where `fastapi_permissions` might be the right addition to your app: If your brain is wired / preconditioned like mine to such a permission model - e.g. exposed for a long time to [Pyramid][]...
+
+Long Story Short: Use [scopes][] until you need something different.
+
 
 Concepts
 --------
 
-Since this is heavely derived from the [Pyramid][] framework, I strongly suggest to take a look at its [security documentation][pyramid_security] if you anything is unclear.
+Since `fastapi_permissions` heavely derived from the [Pyramid][] framework, I strongly suggest to take a look at its [security documentation][pyramid_security] if anything is unclear to you.
 
 The system depends on a couple of concepts not found in FastAPI:
 
@@ -73,7 +93,7 @@ A resource provides an access controll list via it's ```__acl__``` attribute. It
 
 1. an action: ```fastapi_permissions.Allow``` or ```fastapi_permissions.Deny```
 2. a principal: e.g. "role:admin" or "user:bob"
-3. a permission or a tuple of permissions: e.g. "edit" or ("view", "delete")
+3. a permission or a tuple thereof: e.g. "edit" or ("view", "delete")
 
 Examples:
 
@@ -106,26 +126,27 @@ The two principals ```Everyone``` and ```Authenticated``` will be discussed in s
 
 ### users & principal identifiers
 
-A currently logged in user **must provide** his/her principals as an attribute (as with resources, it might be a callable). The principals is just a list of strings, identifying the user and groups/roles the user belongs to:
+You **must provide** a function that returns the principals of the current active user. The principals is just a list of strings, identifying the user and groups/roles the user belongs to:
 
-Examples:
+Example:
 
 ```python
-class UserPrincipalsProperty:
-	principlas = ["user:bob", "role:admin", "group:team"]
-
-class UserPrincipalsMethod:
-    def principals(self):
-        return [f"account:{self.id}", "role:user"]
+def get_active_principals(user: User = Depends(get_current_user)):
+    if user:
+        # user is logged in
+        principals = [Everyone, Authenticated]
+        principals.extend(getattr(user, "principals", []))
+    else:
+        # user is not logged in
+        principals = [Everyone]
+    return principals
 ```
 
 #### special principals
 
 There are two special principals that also help providing access controll lists: ```Everyone``` and ```Authenticated```.
 
-If a user object doesn't provide principals (no "principals" attribute or empty list), the user is considered to be *not logged in*.
-
-The ```Everyone``` principal is added regardless of any other defined principals or login status, ```Authenticated``` is only added for a user that is logged in.
+The ```Everyone``` principal should be added regardless of any other defined principals or login status, ```Authenticated``` should only be added for a user that is logged in.
 
 ### permissions
 
@@ -133,13 +154,13 @@ A permission is just a string that represents an action to be performed on a res
 
 As with the special principals, there is a special permission that is usable as a wildcard: ```fastapi_permisssions.All```.
 
+
 Usage
 -----
 
 There are some things you must provide before using the permissions system:
 
-- a callable ([FastApi dependency][dependency]) that returns the active logged in user
-- the user returned by the callable must provide its principals
+- a callable ([FastApi dependency][dependency]) that returns the principal of the logged in (active) user
 - a resource with an access controll list
 
 ### Configuring the permissions system
@@ -150,11 +171,11 @@ Simple configuration with some defaults:
 from fastapi_permissions import configure_permissions
 
 # must be provided
-def get_current_user(...):
-    """ returns the current logged in user"""
+def get_active_principals(...):
+    """ returns the principals of the current logged in user"""
     ...
 
-permission = configure_permissions(get_current_user)
+permission = configure_permissions(get_active_principals)
 ```
 
 One configuration option is available:
@@ -167,12 +188,12 @@ One configuration option is available:
 from fastapi_permissions import configure_permissions
 
 # must be provided
-def get_current_user(...):
-    """ returns the current logged in user"""
+def get_active_principals(...):
+    """ returns the principals of the current logged in user"""
     ...
 
 permission = configure_permissions(
-    get_current_user,
+    get_active_principals,
     permission_exception
 
 )
@@ -186,35 +207,38 @@ To use access controll in a path operation, you call the perviously configured f
 from fastapi_permissions import configure_permissions, Allow
 
 # must be provided
-def get_current_user(...):
-    """ returns the current logged in user"""
+def get_active_principals(...):
+    """ returns the principals of the current logged in user"""
     ...
 
 example_acl = [(Allow "role:user", "view")]
 
-permission = configure_permissions(get_current_user)
+permission = configure_permissions(get_active_principals)
 
 @app.get("/")
 async def root(acls:list=Depends(permission("view", example_acl))):
     return {"OK"}
 ```
 
-Instead of using an access controll list directly, you can also provide a dependency function that might fetch something from a database:
+Instead of using an access controll list directly, you can also provide a dependency function that might fetch a resource from a database, the resouce should provide its access controll list via the `__acl__` attribute:
 
 ```python
 from fastapi_permissions import configure_permissions, Allow
 
 # must be provided
-def get_current_user(...):
-    """ returns the current logged in user"""
+def get_active_principals(...):
+    """ returns the principals of the current logged in user"""
     ...
 
 # fetches a resource from the database
 def get_item(item_id: int):
-    """ returns a resource from the database """
+    """ returns a resource from the database
+
+    The resource provides an access controll list via its "__acl__" attribute.
+    """
     ...
 
-permission = configure_permissions(get_current_user)
+permission = configure_permissions(get_active_principals)
 
 @app.get("/item/{item_id}")
 async def show_item(item:Item=Depends(permission("view", get_item))):
@@ -225,31 +249,34 @@ async def show_item(item:Item=Depends(permission("view", get_item))):
 
 Sometimes you might want to check permissions inside a function and not as the definition of a path operation:
 
-With ```has_permission(user, permission, resource)``` you can preform the permission check programatically. The function signature can easily be remebered with something like "John eat apple?". The result will be either ```True``` or ```False```, so no need for try/except blocks \o/.
+With ```has_permission(user_principals, permission, resource)``` you can preform the permission check programatically. The function signature can easily be remebered with something like "John eat apple?". The result will be either ```True``` or ```False```, so no need for try/except blocks \o/.
 
 ```python
-from fastapi_permissions import has_permission, Allow, All
+from fastapi_permissions import (
+    has_permission, Allow, All, Everyone, Authenticated
+)
 
-user_john.principals == ["role:owner"]
-apple_resource.__acl__ == [(Allow, "role:owner", All)]
+user_principals == [Everyone, Authenticated, "role:owner", "user:bob"]
+apple_acl == [(Allow, "role:owner", All)]
 
-if has_permission(user_john, "eat", apple_resource):
+if has_permission(user_principals, "eat", apple_acl):
     print "Yum!"
 ```
 
-The other function provided is ```list_permissions(user, resource)``` this will return a dict of all available permissions and a boolean value if the permission is granted or denied:
+The other function provided is ```list_permissions(user_principals, resource)``` this will return a dict of all available permissions and a boolean value if the permission is granted or denied:
 
 ```python
 from fastapi_permissions import list_permissions, Allow, All
 
-user_john.principals == ["role:owner"]
-apple_resource.__acl__ == [(Allow, "role:owner", All)]
+user_principals == [Everyone, Authenticated, "role:owner", "user:bob"]
+apple_acl == [(Allow, "role:owner", All)]
 
-print(list_permissions(user_john, apple_resouce))
+print(list_permissions(user_principals, apple_acl))
 {"permissions:*": True}
 ```
 
 Please note, that ```"permissions:*"``` is the string representation of ```fastapi_permissions.All```.
+
 
 How it works
 ============
@@ -258,9 +285,9 @@ The main work is done in the ```has_permissions()``` function, but the most inte
 
 Wait. I didn't tell you about the latter one?
 
-The ```permission()``` thingy used in the path operation definition before is actually the mentioned ```permission_dependency_factory()```. The ```configure_permissions()``` function just provisiones it with some default values using ```functools.partial```. This reduces the function signature from  ```permission_dependency_factory(permission, resource, current_user_func, permission_exception)``` down to ```partial_function(permission, resource)```.
+The ```permission()``` thingy used in the path operation definition before is actually the mentioned ```permission_dependency_factory()```. The ```configure_permissions()``` function just provisiones it with some default values using ```functools.partial```. This reduces the function signature from  ```permission_dependency_factory(permission, resource, active_principals_func, permission_exception)``` down to ```partial_function(permission, resource)```.
 
-The ```permission_dependency_factory``` returns another function with the signature ```permission_dependency(Depends(resource), Depends(current_user_func))```. This is the acutal signature, that ```Depends()``` uses in the path operation definition to search and inject the dependencies. The rest is just some closure magic ;-).
+The ```permission_dependency_factory``` returns another function with the signature ```permission_dependency(Depends(resource), Depends(active_principals_func))```. This is the acutal signature, that ```Depends()``` uses in the path operation definition to search and inject the dependencies. The rest is just some closure magic ;-).
 
 Or in other words: to have a nice API, the ```Depends()``` in the path operation function should only have a function signature for retrieving the active user and the resource. On the other side, when writing the code, I wanted to only specifiy the parts relevant to the path operation function: the resource and the permission. The rest is just on how to make it work.
 
@@ -307,7 +334,8 @@ using ```make clean``` before)
 
 
 
-[FastApi]: https://fastapi.tiangolo.com/	" "
+[FastApi]: https://fastapi.tiangolo.com/
 [dependency]: https://fastapi.tiangolo.com/tutorial/dependencies/first-steps/
 [pyramid]: https://trypyramid.com
 [pyramid_security]: https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/security.html
+[scopes]: https://fastapi.tiangolo.com/tutorial/security/oauth2-scopes/
