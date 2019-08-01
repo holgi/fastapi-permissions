@@ -34,10 +34,13 @@ extremely simple and incomplete example:
     def get_current_user(token: str = Depends(oauth2_scheme)):
         ...
 
+    def get_active_user_principals(user:User = Depends(get_current_user)):
+        ...
+
     def get_item(item_identifier):
         ...
 
-    permissions = configure_permissions(get_current_user)
+    permissions = configure_permissions(get_active_user_principals)
 
     @app.get("/item/{item_identifier}")
     async def show_item(item:Item = Depends(permission("view", get_item))):
@@ -96,22 +99,24 @@ permission_exception = HTTPException(
 
 
 def configure_permissions(
-    current_user_func: Any,
+    active_principals_func: Any,
     permission_exception: HTTPException = permission_exception,
 ):
     """ sets the basic configuration for the permissions system
 
-    current_user_func: a dependency that returns the current user
-    permission_exception: the exception used if a permission is denied
+    active_principals_func:
+        a dependency that returns the principals of the current active user
+    permission_exception:
+        the exception used if a permission is denied
 
     returns: permission_dependency_factory function,
              with some parameters already provisioned
     """
-    current_user_func = Depends(current_user_func)
+    active_principals_func = Depends(active_principals_func)
 
     return functools.partial(
         permission_dependency_factory,
-        current_user_func=current_user_func,
+        active_principals_func=active_principals_func,
         permission_exception=permission_exception,
     )
 
@@ -119,7 +124,7 @@ def configure_permissions(
 def permission_dependency_factory(
     permission: str,
     resource: Any,
-    current_user_func: Any,
+    active_principals_func: Any,
     permission_exception: HTTPException,
 ):
     """ returns a function that acts as a dependable for checking permissions
@@ -128,10 +133,14 @@ def permission_dependency_factory(
     with the help of fucntools.partial in the "configure_permissions()"
     function.
 
-    permission: the permission to check
-    resource: the resource that will be accessed
-    current_user_func: (provisioned) denpendency, retrieves the current user
-    permission_exception: (provisioned) exception if permission is denied
+    permission:
+        the permission to check
+    resource:
+        the resource that will be accessed
+    active_principals_func (provisioned  by configure_permissions):
+        a dependency that returns the principals of the current active user
+    permission_exception (provisioned  by configure_permissions):
+        exception if permission is denied
 
     returns: dependency function for "Depends()"
     """
@@ -143,26 +152,29 @@ def permission_dependency_factory(
     # to get the caller signature right, we need to add only the resource and
     # user dependable in the definition
     # the permission itself is available through the outer function scope
-    def permission_dependency(resource=resource, user=current_user_func):
-        if has_permission(user, permission, resource):
+    def permission_dependency(
+        resource=resource, principals=active_principals_func
+    ):
+        if has_permission(principals, permission, resource):
             return resource
         raise permission_exception
 
     return permission_dependency
 
 
-def has_permission(user: Any, requested_permission: str, resource: Any):
+def has_permission(
+    user_principals: list, requested_permission: str, resource: Any
+):
     """ checks if a user has the permission for a resource
 
     The order of the function parameters can be remembered like "Joe eat apple"
 
-    user: a user object, must provide principals for logged in user
+    user_principals: the principals of a user
     requested_permission: the permission that should be checked
     resource: the object the user wants to access, must provide an ACL
 
     returns bool: permission granted or denied
     """
-    user_principals = normalize_principals(user)
     acl = normalize_acl(resource)
 
     for action, principal, permissions in acl:
@@ -174,10 +186,10 @@ def has_permission(user: Any, requested_permission: str, resource: Any):
     return False
 
 
-def list_permissions(user: Any, resource: Any):
+def list_permissions(user_principals: list, resource: Any):
     """ lists all permissions of a user for a resouce
 
-    user: a user object, must provide principals for logged in user
+    user_principals: the principals of a user
     resource: the object the user wants to access, must provide an ACL
 
     returns dict: every available permission of the resource as key
@@ -187,32 +199,14 @@ def list_permissions(user: Any, resource: Any):
 
     acl_permissions = (permissions for _, _, permissions in acl)
     as_iterables = ({p} if not is_like_list(p) else p for p in acl_permissions)
-    available_permissions = set(itertools.chain.from_iterable(as_iterables))
+    permissions = set(itertools.chain.from_iterable(as_iterables))
 
     return {
-        str(p): has_permission(user, p, acl) for p in available_permissions
+        str(p): has_permission(user_principals, p, acl) for p in permissions
     }
 
 
 # utility functions
-
-
-def normalize_principals(user: Any):
-    """ augments all user principal with the system ones
-
-    If the user has no "principal" attribute or the attribute evaluates to
-    false, the user is considered to not be logged in. In this case, only the
-    principal "Everyone" is returned
-
-    If a user is considered as logged in, "Everyone" and "Authenticated" are
-    added to the provided user princpals
-    """
-    user_principals = getattr(user, "principals", [])
-    if callable(user_principals):
-        user_principals = user_principals()
-    if not user_principals:
-        return {Everyone}
-    return {Everyone, Authenticated}.union(user_principals)
 
 
 def normalize_acl(resource: Any):
@@ -221,6 +215,9 @@ def normalize_acl(resource: Any):
     If the resource is not an acl list itself it needs to have an "__acl__"
     attribute. If the "__acl__" attribute is a callable, it will be called and
     the result of the call returned.
+
+    An existing __acl__ attribute takes precedence before checking if it is an
+    iterable.
     """
     acl = getattr(resource, "__acl__", None)
     if callable(acl):

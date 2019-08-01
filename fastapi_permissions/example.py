@@ -16,6 +16,7 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 from fastapi_permissions import (
     Allow,
     Authenticated,
+    Everyone,
     configure_permissions,
     list_permissions,
 )
@@ -190,13 +191,25 @@ NewItemAcl = [(Allow, Authenticated, "view")]
 
 
 # the current user is determined by the "get_current_user" function.
-# since this could be named in any way, we need to tell the permissions
-# system how to access the current user
+# but the permissions system is not interested in the user itself, but in the
+# associated principals.
+
+
+def get_active_principals(user: User = Depends(get_current_user)):
+    principals = [Everyone]
+    if user:
+        principals.append(Authenticated)
+        principals.extend(getattr(user, "principals", []))
+    return principals
+
+
+# We need to tell the permissions system, how to get the principals of the
+# active user.
 #
 # "configure_permissions" returns a function that will return another function
 # that can act as a dependable. Confusing? Propably, but easy to use.
 
-permission = configure_permissions(get_current_user)
+permission = configure_permissions(get_active_principals)
 
 # <<<
 

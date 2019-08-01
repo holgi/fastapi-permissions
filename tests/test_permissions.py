@@ -4,26 +4,30 @@ import inspect
 import pytest
 
 
-def dummy_user_callable():
-    return "DUMMY_USER"
+def dummy_principal_callable():
+    return "dummy principals"
 
 
 def dummy_resource_callable():
-    return "DUMMY_RESOURCE"
+    return "dummy resource"
 
 
 class DummyUser:
     def __init__(self, principals):
-        self.principals = principals
+        from fastapi_permissions import Authenticated, Everyone
+
+        self.principals = [Everyone] + principals
+        if principals:
+            self.principals.append(Authenticated)
 
     def __repr__(self):
-        return self.principals[0] if self.principals else "Bob"
+        return self.principals[0]
 
 
 dummy_user_john = DummyUser(["user:john", "role:user"])
 dummy_user_jane = DummyUser(["user:jane", "role:user", "role:moderator"])
 dummy_user_alice = DummyUser(["user:alice", "role:admin"])
-dummy_user_bob = DummyUser(None)
+dummy_user_bob = DummyUser([])
 
 
 @pytest.fixture
@@ -87,17 +91,17 @@ permission_results = {
 }
 
 
-def test_configure_permissions_wraps_current_user_func(mocker):
-    """ test if the curent_user_func parameter is wrapped in "Depends" """
+def test_configure_permissions_wraps_principal_callable(mocker):
+    """ test if active_principle_funcs parameter is wrapped in "Depends" """
 
     mocker.patch("fastapi_permissions.Depends")
 
     from fastapi_permissions import configure_permissions, Depends
 
-    configure_permissions(dummy_user_callable)
+    configure_permissions(dummy_principal_callable)
 
     assert Depends.call_count == 1
-    assert Depends.call_args == mocker.call(dummy_user_callable)
+    assert Depends.call_args == mocker.call(dummy_principal_callable)
 
 
 def test_configure_permissions_returns_correct_signature(mocker):
@@ -112,15 +116,15 @@ def test_configure_permissions_returns_correct_signature(mocker):
         permission_exception,
     )
 
-    partial_func = configure_permissions(dummy_user_callable)
+    partial_func = configure_permissions(dummy_principal_callable)
     parameters = inspect.signature(partial_func).parameters
 
     assert partial_func.func == permission_dependency_factory
     assert len(parameters) == 4
     assert parameters["permission"].default == inspect.Parameter.empty
     assert parameters["resource"].default == inspect.Parameter.empty
-    assert parameters["current_user_func"].default == Depends(
-        dummy_user_callable
+    assert parameters["active_principals_func"].default == Depends(
+        dummy_principal_callable
     )
     assert parameters["permission_exception"].default == permission_exception
 
@@ -133,7 +137,7 @@ def test_configure_permissions_parameters(mocker):
     from fastapi_permissions import configure_permissions
 
     partial_func = configure_permissions(
-        dummy_user_callable, permission_exception="exception option"
+        dummy_principal_callable, permission_exception="exception option"
     )
     parameters = inspect.signature(partial_func).parameters
 
@@ -148,7 +152,7 @@ def test_permission_dependency_factory_wraps_callable_resource(mocker):
     permission_dependency_factory(
         "view",
         dummy_resource_callable,
-        "current_user_func",
+        "active_principals_func",
         "permisssion_exception",
     )
 
@@ -162,7 +166,10 @@ def test_permission_dependency_factory_wraps_noncallable_resource(mocker):
     from fastapi_permissions import permission_dependency_factory, Depends
 
     permission_dependency_factory(
-        "view", "dummy_resource", "current_user_func", "permisssion_exception"
+        "view",
+        "dummy_resource",
+        "active_principals_func",
+        "permisssion_exception",
     )
 
     assert Depends.call_count == 1
@@ -177,14 +184,14 @@ def test_permission_dependency_factory_returns_correct_signature(mocker):
     permission_func = permission_dependency_factory(
         "view",
         dummy_resource_callable,
-        "current_user_func",
+        "active_principals_func",
         "permisssion_exception",
     )
     parameters = inspect.signature(permission_func).parameters
 
     assert len(parameters) == 2
     assert parameters["resource"].default == Depends(dummy_resource_callable)
-    assert parameters["user"].default == "current_user_func"
+    assert parameters["principals"].default == "active_principals_func"
 
 
 def test_permission_dependency_returns_requested_resource(mocker):
@@ -197,7 +204,7 @@ def test_permission_dependency_returns_requested_resource(mocker):
     permission_func = permission_dependency_factory(
         "view",
         dummy_resource_callable,
-        "current_user_func",
+        "active_principals_func",
         "permisssion_exception",
     )
     result = permission_func()
@@ -218,7 +225,7 @@ def test_permission_dependency_raises_exception(mocker):
     permission_func = permission_dependency_factory(
         "view",
         dummy_resource_callable,
-        "current_user_func",
+        "active_principals_func",
         permission_exception,
     )
     with pytest.raises(HTTPException):
@@ -237,7 +244,7 @@ def test_has_permission(user, permission, acl_fixture):
     """ tests the has_permission function """
     from fastapi_permissions import has_permission
 
-    result = has_permission(user, permission, acl_fixture)
+    result = has_permission(user.principals, permission, acl_fixture)
 
     key = "permissions:*" if permission == "nuke" else permission
     assert result == permission_results[user][key]
@@ -251,6 +258,6 @@ def test_list_permissions(user, acl_fixture):
     """ tests the list_permissions function """
     from fastapi_permissions import list_permissions
 
-    result = list_permissions(user, acl_fixture)
+    result = list_permissions(user.principals, acl_fixture)
 
     assert result == permission_results[user]

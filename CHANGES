@@ -1,3 +1,10 @@
-0.1.0
------
- - initial release
+0.2.0 - unpyramidify
+--------------------
+
+ - Removing some ideas borrowed from pyramid and some personal preference.
+
+
+0.1.0  - initial release
+------------------------
+
+ - First working implementation

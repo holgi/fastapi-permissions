@@ -20,7 +20,7 @@ def get_with_user(url, username, client):
 
 
 @pytest.mark.parametrize("username", ["alice", "bob"])
-def test_get_token_good_credentials(username, client):
+def test_app_get_token_good_credentials(username, client):
     response = client.post(
         "/token", data={"username": username, "password": "secret"}
     )
@@ -39,7 +39,7 @@ def test_get_token_good_credentials(username, client):
         ("wrong user", "wrong password"),
     ],
 )
-def test_get_token_bad_credentials(username, password, client):
+def test_app_get_token_bad_credentials(username, password, client):
     response = client.post(
         "/token", data={"username": username, "password": password}
     )
@@ -47,7 +47,7 @@ def test_get_token_bad_credentials(username, password, client):
 
 
 @pytest.mark.parametrize("username", ["alice", "bob"])
-def test_get_me(username, client):
+def test_app_get_me(username, client):
     response = get_with_user("/me/", username, client)
     assert response.status_code == 200
     data = response.json()
@@ -71,7 +71,7 @@ def test_get_me(username, client):
         ("/item/2/use", "alice", True),
     ],
 )
-def test_permissions(url, username, granted, client):
+def test_app_permissions(url, username, granted, client):
     response = get_with_user(url, username, client)
     assert response.status_code == 200 if granted else 403
 
@@ -80,7 +80,7 @@ def test_permissions(url, username, granted, client):
 
 
 @pytest.mark.asyncio
-async def test_no_token_subject():
+async def test_app_no_token_subject():
     from datetime import timedelta
     from fastapi import HTTPException
     from fastapi_permissions.example import (
@@ -95,7 +95,7 @@ async def test_no_token_subject():
 
 
 @pytest.mark.asyncio
-async def test_modified_token():
+async def test_app_modified_token():
     from datetime import timedelta
     from fastapi import HTTPException
     from fastapi_permissions.example import (
@@ -110,7 +110,7 @@ async def test_modified_token():
 
 
 @pytest.mark.asyncio
-async def test_token_with_fake_user():
+async def test_app_token_with_fake_user():
     from datetime import timedelta
     from fastapi import HTTPException
     from fastapi_permissions.example import (
@@ -127,7 +127,7 @@ async def test_token_with_fake_user():
 
 
 @pytest.mark.asyncio
-async def test_add_items_would_return_correct_value():
+async def test_app_add_items_would_return_correct_value():
     from fastapi_permissions.example import add_items
 
     result = await add_items([])
