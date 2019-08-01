@@ -8,7 +8,7 @@ extremely simple and incomplete example:
 
     from fastapi import Depends, FastAPI
     from fastapi.security import OAuth2PasswordBearer
-    from fastapi_permissions import configure_permissions, Allow, Deny, Grant
+    from fastapi_permissions import configure_permissions, Allow, Deny
     from pydantic import BaseModel
 
     app = FastAPI()
@@ -40,8 +40,8 @@ extremely simple and incomplete example:
     permissions = configure_permissions(get_current_user)
 
     @app.get("/item/{item_identifier}")
-    async def show_item(grant:Grant=Depends(permission("view", get_item))):
-        return [{"item": grant.resource, "user": grant.user.name}]
+    async def show_item(item:Item = Depends(permission("view", get_item))):
+        return [{"item": item}]
 """
 
 __version__ = "0.1.0"
@@ -96,19 +96,14 @@ permission_exception = HTTPException(
     headers={"WWW-Authenticate": "Bearer"},
 )
 
-# the return data structure if a permission is granted
-Grant = collections.namedtuple("Grant", ["user", "resource"])
-
 
 def configure_permissions(
     current_user_func: Any,
-    grant_class: Type[Any] = Grant,
     permission_exception: HTTPException = permission_exception,
 ):
     """ sets the basic configuration for the permissions system
 
     current_user_func: a dependency that returns the current user
-    grant_class: the result class used for a granted permission
     permission_exception: the exception used if a permission is denied
 
     returns: permission_dependency_factory function,
@@ -119,7 +114,6 @@ def configure_permissions(
     return functools.partial(
         permission_dependency_factory,
         current_user_func=current_user_func,
-        grant_class=grant_class,
         permission_exception=permission_exception,
     )
 
@@ -128,7 +122,6 @@ def permission_dependency_factory(
     permission: str,
     resource: Any,
     current_user_func: Any,
-    grant_class: Type[Any],
     permission_exception: HTTPException,
 ):
     """ returns a function that acts as a dependable for checking permissions
@@ -140,7 +133,6 @@ def permission_dependency_factory(
     permission: the permission to check
     resource: the resource that will be accessed
     current_user_func: (provisioned) denpendency, retrieves the current user
-    grant_class: (provisioned) data class used if permission is granted
     permission_exception: (provisioned) exception if permission is denied
 
     returns: dependency function for "Depends()"
@@ -155,7 +147,7 @@ def permission_dependency_factory(
     # the permission itself is available through the outer function scope
     def permission_dependency(resource=resource, user=current_user_func):
         if has_permission(user, permission, resource):
-            return grant_class(user=user, resource=resource)
+            return resource
         raise permission_exception
 
     return permission_dependency

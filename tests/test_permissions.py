@@ -5,11 +5,11 @@ import pytest
 
 
 def dummy_user_callable():
-    pass
+    return "DUMMY_USER"
 
 
 def dummy_resource_callable():
-    pass
+    return "DUMMY_RESOURCE"
 
 
 class DummyUser:
@@ -109,7 +109,6 @@ def test_configure_permissions_returns_correct_signature(mocker):
         configure_permissions,
         permission_dependency_factory,
         Depends,
-        Grant,
         permission_exception,
     )
 
@@ -117,13 +116,12 @@ def test_configure_permissions_returns_correct_signature(mocker):
     parameters = inspect.signature(partial_func).parameters
 
     assert partial_func.func == permission_dependency_factory
-    assert len(parameters) == 5
+    assert len(parameters) == 4
     assert parameters["permission"].default == inspect.Parameter.empty
     assert parameters["resource"].default == inspect.Parameter.empty
     assert parameters["current_user_func"].default == Depends(
         dummy_user_callable
     )
-    assert parameters["grant_class"].default == Grant
     assert parameters["permission_exception"].default == permission_exception
 
 
@@ -136,12 +134,10 @@ def test_configure_permissions_parameters(mocker):
 
     partial_func = configure_permissions(
         dummy_user_callable,
-        grant_class="grant option",
         permission_exception="exception option",
     )
     parameters = inspect.signature(partial_func).parameters
 
-    assert parameters["grant_class"].default == "grant option"
     assert parameters["permission_exception"].default == "exception option"
 
 
@@ -154,7 +150,6 @@ def test_permission_dependency_factory_wraps_callable_resource(mocker):
         "view",
         dummy_resource_callable,
         "current_user_func",
-        "grant_class",
         "permisssion_exception",
     )
 
@@ -171,7 +166,6 @@ def test_permission_dependency_factory_wraps_noncallable_resource(mocker):
         "view",
         "dummy_resource",
         "current_user_func",
-        "grant_class",
         "permisssion_exception",
     )
 
@@ -188,7 +182,6 @@ def test_permission_dependency_factory_returns_correct_signature(mocker):
         "view",
         dummy_resource_callable,
         "current_user_func",
-        "grant_class",
         "permisssion_exception",
     )
     parameters = inspect.signature(permission_func).parameters
@@ -198,14 +191,13 @@ def test_permission_dependency_factory_returns_correct_signature(mocker):
     assert parameters["user"].default == "current_user_func"
 
 
-def test_permission_dependency_returns_grant(mocker):
-    """ If a user has a permission, a grant should be returned """
+def test_permission_dependency_returns_requested_resource(mocker):
+    """ If a user has a permission, the requested resource should be returned """
     mocker.patch("fastapi_permissions.has_permission", return_value=True)
     mocker.patch("fastapi_permissions.Depends")
 
     from fastapi_permissions import (
         permission_dependency_factory,
-        Grant,
         Depends,
     )
 
@@ -213,15 +205,11 @@ def test_permission_dependency_returns_grant(mocker):
         "view",
         dummy_resource_callable,
         "current_user_func",
-        Grant,
         "permisssion_exception",
     )
     result = permission_func()
 
-    assert isinstance(result, Grant)
-    print(result)
-    assert result.user == "current_user_func"
-    assert result.resource == Depends(dummy_resource_callable)
+    assert result == Depends(dummy_resource_callable)
 
 
 def test_permission_dependency_raises_exception(mocker):
@@ -238,7 +226,6 @@ def test_permission_dependency_raises_exception(mocker):
         "view",
         dummy_resource_callable,
         "current_user_func",
-        "grant_class",
         permission_exception,
     )
     with pytest.raises(HTTPException):

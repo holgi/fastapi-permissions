@@ -9,7 +9,7 @@ An extremely simple and incomplete example:
 ```python
 from fastapi import Depends, FastAPI
 from fastapi.security import OAuth2PasswordBearer
-from fastapi_permissions import configure_permissions, Allow, Deny, Grant
+from fastapi_permissions import configure_permissions, Allow, Deny
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -41,8 +41,8 @@ def get_item(item_identifier):
 permissions = configure_permissions(get_current_user)
 
 @app.get("/item/{item_identifier}")
-async def show_item(grant:Grant=Depends(permission("view", get_item))):
-    return [{"item": grant.resource, "user": grant.user.name}]
+async def show_item(item: Item=Depends(permission("view", get_item))):
+    return [{"item": item}]
 ```
 
 For a better example install ```fastapi_permissions``` source in an virtual environment (see further below), and start a test server:
@@ -157,12 +157,8 @@ def get_current_user(...):
 permission = configure_permissions(get_current_user)
 ```
 
-Full configuration options are available:
+One configuration option is available:
 
-- grant_class:
-	- an instance of this class is returned when a permission is granted
-	- must accept "user" and "resource" keyword argument in __init__
-	- defaults to fastapi_permissions.Grant
 - permission_exception:
 	- this exception will be raised if a permission is denied
 	- defaults to fastapi_permissions.permission_exception
@@ -177,7 +173,6 @@ def get_current_user(...):
 
 permission = configure_permissions(
     get_current_user,
-    grant_class,
     permission_exception
 
 )
@@ -185,10 +180,10 @@ permission = configure_permissions(
 
 ### using permissions in path operation
 
-To use access controll in a path operation, you call the perviously configured function with a permission and the resource. If the permission is granted, a grant object will be returned. The currently active user (acquired via ```get_current_user()```) and the resource the permission is checked on are available as properties.
+To use access controll in a path operation, you call the perviously configured function with a permission and the resource. If the permission is granted, the  requested resource the permission is checked on will be returned, or in this case, the acl list
 
 ```python
-from fastapi_permissions import configure_permissions, Allow, Grant
+from fastapi_permissions import configure_permissions, Allow
 
 # must be provided
 def get_current_user(...):
@@ -200,14 +195,14 @@ example_acl = [(Allow "role:user", "view")]
 permission = configure_permissions(get_current_user)
 
 @app.get("/")
-async def root(grant:Grant=Depends(permission("view", example_acl))):
-    return {"user": grant.user}
+async def root(acls:list=Depends(permission("view", example_acl))):
+    return {"OK"}
 ```
 
 Instead of using an access controll list directly, you can also provide a dependency function that might fetch something from a database:
 
 ```python
-from fastapi_permissions import configure_permissions, Allow, Grant
+from fastapi_permissions import configure_permissions, Allow
 
 # must be provided
 def get_current_user(...):
@@ -222,8 +217,8 @@ def get_item(item_id: int):
 permission = configure_permissions(get_current_user)
 
 @app.get("/item/{item_id}")
-async def show_item(grant:Grant=Depends(permission("view", get_item))):
-    return {"user": grant.user, "item": grant.resouce}
+async def show_item(item:Item=Depends(permission("view", get_item))):
+    return {"item": item}
 ```
 
 ### helper functions
@@ -263,7 +258,7 @@ The main work is done in the ```has_permissions()``` function, but the most inte
 
 Wait. I didn't tell you about the latter one?
 
-The ```permission()``` thingy used in the path operation definition before is actually the mentioned ```permission_dependency_factory()```. The ```configure_permissions()``` function just provisiones it with some default values using ```functools.partial```. This reduces the function signature from  ```permission_dependency_factory(permission, resource, current_user_func, grant_class, permission_exception)``` down to ```partial_function(permission, resource)```.
+The ```permission()``` thingy used in the path operation definition before is actually the mentioned ```permission_dependency_factory()```. The ```configure_permissions()``` function just provisiones it with some default values using ```functools.partial```. This reduces the function signature from  ```permission_dependency_factory(permission, resource, current_user_func, permission_exception)``` down to ```partial_function(permission, resource)```.
 
 The ```permission_dependency_factory``` returns another function with the signature ```permission_dependency(Depends(resource), Depends(current_user_func))```. This is the acutal signature, that ```Depends()``` uses in the path operation definition to search and inject the dependencies. The rest is just some closure magic ;-).
 
