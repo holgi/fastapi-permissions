@@ -52,7 +52,7 @@ lint: ## check style with flake8
 	black fastapi_permissions tests
 	flake8 fastapi_permissions tests
 
-test: ## run tests quickly with the default Python
+test: ## run tests quickly (without tests for example.py) with the default Python
 	pytest tests -x --disable-warnings -k "not app"
 
 coverage: ## check code coverage with the default Python

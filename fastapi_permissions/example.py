@@ -196,10 +196,13 @@ NewItemAcl = [(Allow, Authenticated, "view")]
 
 
 def get_active_principals(user: User = Depends(get_current_user)):
-    principals = [Everyone]
     if user:
-        principals.append(Authenticated)
+        # user is logged in
+        principals = [Everyone, Authenticated]
         principals.extend(getattr(user, "principals", []))
+    else:
+        # user is not logged in
+        principals = [Everyone]
     return principals
 
 
