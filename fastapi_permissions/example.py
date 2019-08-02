@@ -212,7 +212,7 @@ def get_active_principals(user: User = Depends(get_current_user)):
 # "configure_permissions" returns a function that will return another function
 # that can act as a dependable. Confusing? Propably, but easy to use.
 
-permission = configure_permissions(get_active_principals)
+Permission = configure_permissions(get_active_principals)
 
 # <<<
 
@@ -242,7 +242,7 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 
 # >>> THIS IS NEW
 
-# The most interesting part here is permission("view", ItemListResource)"
+# The most interesting part here is Permission("view", ItemListResource)"
 # This function call will return a function that acts as a dependable
 
 # If the currently logged in user has the permission "view" for the
@@ -258,7 +258,7 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 
 @app.get("/items/")
 async def show_items(
-    ilr: ItemListResource = Depends(permission("view", ItemListResource)),
+    ilr: ItemListResource = Permission("view", ItemListResource),
     user=Depends(get_current_user),
 ):
     available_permissions = {
@@ -279,7 +279,7 @@ async def show_items(
 
 
 @app.get("/item/add")
-async def add_items(acls: list = Depends(permission("create", NewItemAcl))):
+async def add_items(acls: list = Permission("create", NewItemAcl)):
     return [{"items": "I can haz cheese?"}]
 
 
@@ -292,7 +292,7 @@ async def add_items(acls: list = Depends(permission("create", NewItemAcl))):
 
 
 @app.get("/item/{item_id}")
-async def show_item(item: Item = Depends(permission("view", get_item))):
+async def show_item(item: Item = Permission("view", get_item)):
     return [{"item": item}]
 
 
@@ -302,7 +302,7 @@ async def show_item(item: Item = Depends(permission("view", get_item))):
 
 
 @app.get("/item/{item_id}/use")
-async def use_item(item: Item = Depends(permission("use", get_item))):
+async def use_item(item: Item = Permission("use", get_item)):
     return [{"item": item}]
 
 

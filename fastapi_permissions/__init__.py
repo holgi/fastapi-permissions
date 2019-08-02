@@ -40,10 +40,11 @@ extremely simple and incomplete example:
     def get_item(item_identifier):
         ...
 
-    permissions = configure_permissions(get_active_user_principals)
+    # Permission is already wrapped in Depends()
+    Permissions = configure_permissions(get_active_user_principals)
 
     @app.get("/item/{item_identifier}")
-    async def show_item(item:Item = Depends(permission("view", get_item))):
+    async def show_item(item:Item = Permission("view", get_item)):
         return [{"item": item}]
 """
 
@@ -159,7 +160,7 @@ def permission_dependency_factory(
             return resource
         raise permission_exception
 
-    return permission_dependency
+    return Depends(permission_dependency)
 
 
 def has_permission(

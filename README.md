@@ -42,10 +42,11 @@ def get_active_user_principals(user:User = Depends(get_current_user)):
 def get_item(item_identifier):
     ...
 
-permissions = configure_permissions(get_active_user_principals)
+# Permission is already wrapped in Depends()
+Permission = configure_permissions(get_active_user_principals)
 
 @app.get("/item/{item_identifier}")
-async def show_item(item: Item=Depends(permission("view", get_item))):
+async def show_item(item: Item=Permission("view", get_item)):
     return [{"item": item}]
 ```
 
@@ -213,10 +214,11 @@ def get_active_principals(...):
 
 example_acl = [(Allow "role:user", "view")]
 
-permission = configure_permissions(get_active_principals)
+# Permission is already wrapped in Depends()
+Permission = configure_permissions(get_active_principals)
 
 @app.get("/")
-async def root(acls:list=Depends(permission("view", example_acl))):
+async def root(acls:list=Permission("view", example_acl)):
     return {"OK"}
 ```
 
@@ -238,10 +240,11 @@ def get_item(item_id: int):
     """
     ...
 
-permission = configure_permissions(get_active_principals)
+# Permission is alredy wrapped in Depends()
+Permission = configure_permissions(get_active_principals)
 
 @app.get("/item/{item_id}")
-async def show_item(item:Item=Depends(permission("view", get_item))):
+async def show_item(item:Item=permission("view", get_item)):
     return {"item": item}
 ```
 
