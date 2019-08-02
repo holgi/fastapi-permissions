@@ -48,7 +48,7 @@ extremely simple and incomplete example:
         return [{"item": item}]
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 from fastapi import Depends, HTTPException
 from starlette.status import HTTP_403_FORBIDDEN

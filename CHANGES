@@ -1,3 +1,10 @@
+0.2.1 - Depends
+---------------
+
+ - wrapping the result of permission_dependency_factory in Depends(),
+   simplifying the use in path operation functions
+
+
 0.2.0 - unpyramidify
 --------------------
 
