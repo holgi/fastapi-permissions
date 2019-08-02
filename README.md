@@ -103,14 +103,14 @@ from fastapi_permissions import Allow, Deny, Authenticated, Everyone
 
 class StaticAclResource:
     __acl__ =  [
-		(Allow, Everyone, "view"),
+        (Allow, Everyone, "view"),
         (Allow, "role:user", "share")
     ]
 
 class DynamicAclResource:
     def __acl__(self):
         return [
-		(Allow, Authenticated, "view"),
+        (Allow, Authenticated, "view"),
         (Allow, "role:user", "share"),
         (Allow, f"user:{self.owner}", "edit"),
     ]
@@ -182,8 +182,8 @@ permission = configure_permissions(get_active_principals)
 One configuration option is available:
 
 - permission_exception:
-	- this exception will be raised if a permission is denied
-	- defaults to fastapi_permissions.permission_exception
+    - this exception will be raised if a permission is denied
+    - defaults to fastapi_permissions.permission_exception
 
 ```python
 from fastapi_permissions import configure_permissions
