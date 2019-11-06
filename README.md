@@ -176,7 +176,8 @@ def get_active_principals(...):
     """ returns the principals of the current logged in user"""
     ...
 
-permission = configure_permissions(get_active_principals)
+# Permission is already wrapped in Depends()
+Permission = configure_permissions(get_active_principals)
 ```
 
 One configuration option is available:
@@ -193,7 +194,8 @@ def get_active_principals(...):
     """ returns the principals of the current logged in user"""
     ...
 
-permission = configure_permissions(
+# Permission is already wrapped in Depends()
+Permission = configure_permissions(
     get_active_principals,
     permission_exception
 
