@@ -1,6 +1,8 @@
 Row Level Permissions for FastAPI
 =================================
 
+[![Build Status](https://travis-ci.com/holgi/fastapi-permissions.svg?branch=master)](https://travis-ci.com/holgi/fastapi-permissions)
+
 While trying out the excellent [FastApi][] framework there was one peace missing for me: an easy, declarative way to define permissions of users (and roles/groups) on resources. Since I reall love the way [Pyramid][] handles this, I re-implemented and adapted the system for FastApi (well, you might call it a blatant rip-off).
 
 
