@@ -1,25 +1,26 @@
-from datetime import datetime, timedelta
 from typing import List
+from datetime import datetime, timedelta
 
 import jwt
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt import PyJWTError
-from passlib.context import CryptContext
+from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, ValidationError
+from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from starlette.status import HTTP_401_UNAUTHORIZED
+
+from fastapi_permissions import (
+    Allow,
+    Everyone,
+    Authenticated,
+    list_permissions,
+    configure_permissions,
+)
 
 # >>> THIS IS NEW
 
 # import of the new "permission" module for row level permissions
 
-from fastapi_permissions import (
-    Allow,
-    Authenticated,
-    Everyone,
-    configure_permissions,
-    list_permissions,
-)
 
 # <<<
 
@@ -219,7 +220,7 @@ Permission = configure_permissions(get_active_principals)
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends()
+    form_data: OAuth2PasswordRequestForm = Depends(),
 ):
     user = authenticate_user(
         fake_users_db, form_data.username, form_data.password

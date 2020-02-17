@@ -24,9 +24,6 @@ requires-python = ">=3.6"
 
 [tool.flit.metadata.requires-extra]
 test = [
-    "black",
-    "flake8",
-    "flake8-comprehensions",
     "pytest >=4.0.0",
     "pytest-cov",
     "pytest-mock",
@@ -34,6 +31,12 @@ test = [
     "tox",
 ]
 dev = [
+    "black",
+    "flake8",
+    "flake8-comprehensions",
+    "isort",
+    "keyring",
+    "pre-commit",
     "pyjwt",
     "passlib[bcrypt]",
     "fastapi[all]",
@@ -52,3 +55,9 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.isort]
+line_length=79
+multi_line_output=3
+length_sort="True"
+include_trailing_comma="True"
