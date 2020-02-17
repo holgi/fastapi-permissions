@@ -70,7 +70,7 @@ install:  ## install updated project.toml with flint
 	flit install --pth-file
 
 devenv: ## setup development environment
-	python3 -m venv --prompt fastapi .venv
+	python3 -m venv --prompt permissions .venv
 	.venv/bin/pip3 install --upgrade pip
 	.venv/bin/pip3 install flit
 	.venv/bin/flit install --pth-file
