@@ -1,3 +1,11 @@
+0.2.2 - Hartbeat, Feb. 2020
+---------------------------
+
+ - A quick reminder that this is not dead yet.
+ - Added pre-commit hook and isort for imports
+ - Some adjustments in the Makefile.
+
+
 0.2.1 - Depends
 ---------------
 
