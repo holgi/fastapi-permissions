@@ -301,21 +301,14 @@ Or in other words: to have a nice API, the ```Depends()``` in the path operation
 Dev & Test virtual environment
 ------------------------------
 
-Testing and development should be done with a virtual environment.
+There is an easy to use make command for setting up a virtual environment, installing the required packages and installing the project in an editable way.
 
 ```
 $ git clone https://github.com/holgi/fastapi-permissions.git
 $ cd fastapi-permissions
-$ python3 -m venv .venv --prompt permissions
+$ make devenv
 $ source .venv/bin/activate
 (permissions) $ pip install -U pip
-```
-
-Development requires flit to be installed:
-
-```
-(permissions) $ pip install flit
-(permissions) $ flit install --pth-file
 ```
 
 Then you can test any changes locally with ```make test```. This will stop
@@ -337,8 +330,6 @@ using ```make clean``` before)
 ```
 (permissions) $ make tox
 ```
-
-
 
 
 [FastApi]: https://fastapi.tiangolo.com/
