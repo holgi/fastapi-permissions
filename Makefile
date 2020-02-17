@@ -44,22 +44,39 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean-test: ## remove test and coverage artifacts
+	rm -fr .pytest_cache/
 	rm -fr .tox/
 	rm -f .coverage
 	rm -fr htmlcov/
 
-lint: ## check style with flake8
+lint: ## reformat with black and check style with flake8
+	isort -rc fastapi_permissions
+	isort -rc tests
 	black fastapi_permissions tests
 	flake8 fastapi_permissions tests
 
-test: ## run tests quickly (without tests for example.py) with the default Python
+test: ## run tests quickly with the default Python
 	pytest tests -x --disable-warnings -k "not app"
 
-coverage: ## check code coverage with the default Python
+coverage: ## full test suite, check code coverage and open coverage report
 	pytest tests --cov=fastapi_permissions
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-tox:  ## run a full tox test
+tox:  ## run fully isolated tests with tox
 	tox
 
+install:  ## install updated project.toml with flint
+	flit install --pth-file
+
+devenv: ## setup development environment
+	python3 -m venv --prompt {{cookiecutter.project_slug}} .venv
+	.venv/bin/pip3 install --upgrade pip
+	.venv/bin/pip3 install flit
+	.venv/bin/flit install --pth-file
+
+repo: devenv ## complete project setup with development environment and git repo
+	git init .
+	.venv/bin/pre-commit install
+	git add .
+	git commit -m "import of project template" --no-verify
