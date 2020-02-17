@@ -308,7 +308,6 @@ $ git clone https://github.com/holgi/fastapi-permissions.git
 $ cd fastapi-permissions
 $ make devenv
 $ source .venv/bin/activate
-(permissions) $ pip install -U pip
 ```
 
 Then you can test any changes locally with ```make test```. This will stop
