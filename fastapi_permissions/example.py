@@ -263,7 +263,7 @@ async def show_items(
     user=Depends(get_current_user),
 ):
     available_permissions = {
-        index: list_permissions(user, get_item(index))
+        index: list_permissions(user.principals, get_item(index))
         for index in fake_items_db
     }
     return [
