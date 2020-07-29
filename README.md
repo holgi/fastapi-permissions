@@ -248,7 +248,7 @@ def get_item(item_id: int):
 Permission = configure_permissions(get_active_principals)
 
 @app.get("/item/{item_id}")
-async def show_item(item:Item=permission("view", get_item)):
+async def show_item(item:Item=Permission("view", get_item)):
     return {"item": item}
 ```
 
