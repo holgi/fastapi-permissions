@@ -1,3 +1,11 @@
+0.2.5 - List Fix II, Jul. 2020
+---------------------------
+
+ - While providing a fix for ACLs as a list, another serious error was
+   introduced. Luckily William tried this out and provided a (hopefully)
+   final fix.
+
+
 0.2.4 - List Fix, Jul. 2020
 ---------------------------
 

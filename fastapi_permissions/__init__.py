@@ -48,7 +48,7 @@ extremely simple and incomplete example:
         return [{"item": item}]
 """
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 import functools
 import itertools
@@ -145,13 +145,15 @@ def permission_dependency_factory(
     returns: dependency function for "Depends()"
     """
     if callable(resource):
-        resource = Depends(resource)
+        dependable_resource = Depends(resource)
+    else:
+        dependable_resource = Depends(lambda: resource)
 
     # to get the caller signature right, we need to add only the resource and
     # user dependable in the definition
     # the permission itself is available through the outer function scope
     def permission_dependency(
-        resource=resource, principals=active_principals_func
+        resource=dependable_resource, principals=active_principals_func
     ):
         if has_permission(principals, permission, resource):
             return resource
