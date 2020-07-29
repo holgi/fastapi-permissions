@@ -3,7 +3,7 @@
 
 def test_all_instance():
     """ is the "All" constant an instance of "_AllPermissions" """
-    from fastapi_permissions import _AllPermissions, All
+    from fastapi_permissions import All, _AllPermissions
 
     assert isinstance(All, _AllPermissions)
 

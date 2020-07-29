@@ -61,8 +61,8 @@ def test_app_get_me(username, client):
     [
         ("/items/", "bob", True),
         ("/items/", "alice", True),
-        ("/item/add", "bob", False),
-        ("/item/add", "alice", False),
+        ("/item/add", "bob", True),
+        ("/item/add", "alice", True),
         ("/item/1", "bob", True),
         ("/item/1", "alice", True),
         ("/item/2", "bob", True),
@@ -86,10 +86,12 @@ def test_app_permissions(url, username, granted, client):
 async def test_app_no_token_subject():
     """ raise an error if no subject is specified in login token """
     from datetime import timedelta
+
     from fastapi import HTTPException
+
     from fastapi_permissions.example import (
-        create_access_token,
         get_current_user,
+        create_access_token,
     )
 
     token = create_access_token(data={}, expires_delta=timedelta(minutes=5))
@@ -102,10 +104,12 @@ async def test_app_no_token_subject():
 async def test_app_token_with_fake_user():
     """ raise an error if an invalid subject is specified in login token """
     from datetime import timedelta
+
     from fastapi import HTTPException
+
     from fastapi_permissions.example import (
-        create_access_token,
         get_current_user,
+        create_access_token,
     )
 
     token = create_access_token(
@@ -120,10 +124,12 @@ async def test_app_token_with_fake_user():
 async def test_app_modified_token():
     """ raise an error if login token was modified """
     from datetime import timedelta
+
     from fastapi import HTTPException
+
     from fastapi_permissions.example import (
-        create_access_token,
         get_current_user,
+        create_access_token,
     )
 
     token = create_access_token(data={}, expires_delta=timedelta(minutes=5))
@@ -134,7 +140,7 @@ async def test_app_modified_token():
 
 @pytest.mark.asyncio
 async def test_app_add_items_would_return_correct_value():
-    """ "/items/" will return the correct value if someone had permission """
+    """ add_items will return the correct value if someone had permission """
     from fastapi_permissions.example import add_items
 
     result = await add_items([])
@@ -143,7 +149,7 @@ async def test_app_add_items_would_return_correct_value():
 
 def test_get_active_principals_for_not_logged_in_user():
     """ return the correct principals for a non logged in user """
-    from fastapi_permissions.example import get_active_principals, Everyone
+    from fastapi_permissions.example import Everyone, get_active_principals
 
     result = get_active_principals(None)
     assert result == [Everyone]

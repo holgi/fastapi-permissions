@@ -188,7 +188,7 @@ class ItemListResource:
 
 # you can even use just a list
 
-NewItemAcl = [(Allow, Authenticated, "view")]
+NewItemAcl = [(Allow, Authenticated, "create")]
 
 
 # the current user is determined by the "get_current_user" function.

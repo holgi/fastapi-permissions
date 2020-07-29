@@ -15,7 +15,7 @@ def dummy_resource_callable():
 
 class DummyUser:
     def __init__(self, principals):
-        from fastapi_permissions import Authenticated, Everyone
+        from fastapi_permissions import Everyone, Authenticated
 
         self.principals = [Everyone] + principals
         if principals:
@@ -33,7 +33,7 @@ dummy_user_bob = DummyUser([])
 
 @pytest.fixture
 def acl_fixture():
-    from fastapi_permissions import Allow, Deny, Everyone, Authenticated, All
+    from fastapi_permissions import All, Deny, Allow, Everyone, Authenticated
 
     yield [
         (Allow, "user:john", "view"),
@@ -97,7 +97,7 @@ def test_configure_permissions_wraps_principal_callable(mocker):
 
     mocker.patch("fastapi_permissions.Depends")
 
-    from fastapi_permissions import configure_permissions, Depends
+    from fastapi_permissions import Depends, configure_permissions
 
     configure_permissions(dummy_principal_callable)
 
@@ -111,10 +111,10 @@ def test_configure_permissions_returns_correct_signature(mocker):
     mocker.patch("fastapi_permissions.Depends")
 
     from fastapi_permissions import (
-        configure_permissions,
-        permission_dependency_factory,
         Depends,
         permission_exception,
+        configure_permissions,
+        permission_dependency_factory,
     )
 
     partial_func = configure_permissions(dummy_principal_callable)
@@ -148,7 +148,7 @@ def test_configure_permissions_parameters(mocker):
 def test_permission_dependency_factory_wraps_callable_resource(mocker):
     mocker.patch("fastapi_permissions.Depends")
 
-    from fastapi_permissions import permission_dependency_factory, Depends
+    from fastapi_permissions import Depends, permission_dependency_factory
 
     permission_dependency_factory(
         "view",
@@ -161,26 +161,10 @@ def test_permission_dependency_factory_wraps_callable_resource(mocker):
     assert Depends.call_args_list[0] == mocker.call(dummy_resource_callable)
 
 
-def test_permission_dependency_factory_wraps_noncallable_resource(mocker):
-    mocker.patch("fastapi_permissions.Depends")
-
-    from fastapi_permissions import permission_dependency_factory, Depends
-
-    permission_dependency_factory(
-        "view",
-        "dummy_resource",
-        "active_principals_func",
-        "permisssion_exception",
-    )
-
-    assert Depends.call_count == 2
-    assert Depends.call_args_list[0] != mocker.call("dummy_resource")
-
-
 def test_permission_dependency_factory_returns_correct_signature(mocker):
     mocker.patch("fastapi_permissions.Depends")
 
-    from fastapi_permissions import permission_dependency_factory, Depends
+    from fastapi_permissions import Depends, permission_dependency_factory
 
     permission_func = permission_dependency_factory(
         "view",
@@ -206,7 +190,7 @@ def test_permission_dependency_returns_requested_resource(mocker):
     mocker.patch("fastapi_permissions.has_permission", return_value=True)
     mocker.patch("fastapi_permissions.Depends")
 
-    from fastapi_permissions import permission_dependency_factory, Depends
+    from fastapi_permissions import Depends, permission_dependency_factory
 
     # since the resulting permission function is wrapped in Depends()
     # we need to extract it from the mock
@@ -229,12 +213,13 @@ def test_permission_dependency_raises_exception(mocker):
     mocker.patch("fastapi_permissions.has_permission", return_value=False)
     mocker.patch("fastapi_permissions.Depends")
 
-    from fastapi_permissions import (
-        permission_dependency_factory,
-        permission_exception,
-        Depends,
-    )
     from fastapi import HTTPException
+
+    from fastapi_permissions import (
+        Depends,
+        permission_exception,
+        permission_dependency_factory,
+    )
 
     # since the resulting permission function is wrapped in Depends()
     # we need to extract it from the mock

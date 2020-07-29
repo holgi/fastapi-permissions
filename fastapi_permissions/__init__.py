@@ -146,8 +146,6 @@ def permission_dependency_factory(
     """
     if callable(resource):
         resource = Depends(resource)
-    else:
-        resource = Depends(lambda: resource)
 
     # to get the caller signature right, we need to add only the resource and
     # user dependable in the definition
