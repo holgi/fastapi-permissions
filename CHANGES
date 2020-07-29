@@ -1,5 +1,12 @@
-0.2.2 - Hartbeat, Feb. 2020
+0.2.4 - List Fix, Jul. 2020
 ---------------------------
+
+ - When providing ACLs as a list, the permissions are now checked correctly
+   (Thanks to William for pointing out this issue)
+
+
+0.2.2 - Heartbeat, Feb. 2020
+----------------------------
 
  - A quick reminder that this is not dead yet.
  - Added pre-commit hook and isort for imports
