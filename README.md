@@ -216,7 +216,7 @@ def get_active_principals(...):
     """ returns the principals of the current logged in user"""
     ...
 
-example_acl = [(Allow "role:user", "view")]
+example_acl = [(Allow, "role:user", "view")]
 
 # Permission is already wrapped in Depends()
 Permission = configure_permissions(get_active_principals)
