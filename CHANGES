@@ -3,6 +3,8 @@
 
  - Changed the list based ACLs in the example app to catch errors in the test
  - Added tests for the OpenAPI specification of the example app
+   This is a reaction to the "List Fix" problems I had and that were finally
+   resolved by William.
 
 
 0.2.5 - List Fix II, Jul. 2020

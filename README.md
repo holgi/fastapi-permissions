@@ -331,6 +331,12 @@ using ```make clean``` before)
 ```
 
 
+Thanks
+------
+ - Sebastián Ramírez, for creating FastAPI
+ - William, for fixing my stupid bug
+
+
 [FastApi]: https://fastapi.tiangolo.com/
 [dependency]: https://fastapi.tiangolo.com/tutorial/dependencies/first-steps/
 [pyramid]: https://trypyramid.com
