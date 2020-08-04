@@ -10,6 +10,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from starlette.status import HTTP_401_UNAUTHORIZED
 
 from fastapi_permissions import (
+    Deny,
     Allow,
     Everyone,
     Authenticated,
@@ -188,7 +189,7 @@ class ItemListResource:
 
 # you can even use just a list
 
-NewItemAcl = [(Allow, Authenticated, "create")]
+NewItemAcl = [(Deny, "user:bob", "create"), (Allow, Authenticated, "create")]
 
 
 # the current user is determined by the "get_current_user" function.
@@ -275,8 +276,8 @@ async def show_items(
 
 
 # permission result for the fake users:
-# - bob: DENIED
-# - alice: DENIED
+# - bob: denied
+# - alice: granted
 
 
 @app.get("/item/add")

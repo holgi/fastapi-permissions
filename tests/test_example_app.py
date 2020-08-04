@@ -61,7 +61,7 @@ def test_app_get_me(username, client):
     [
         ("/items/", "bob", True),
         ("/items/", "alice", True),
-        ("/item/add", "bob", True),
+        ("/item/add", "bob", False),
         ("/item/add", "alice", True),
         ("/item/1", "bob", True),
         ("/item/1", "alice", True),
