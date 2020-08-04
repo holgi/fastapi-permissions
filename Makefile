@@ -51,8 +51,8 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 
 lint: ## reformat with black and check style with flake8
-	isort -rc fastapi_permissions
-	isort -rc tests
+	isort fastapi_permissions
+	isort tests
 	black fastapi_permissions tests
 	flake8 fastapi_permissions tests
 

@@ -1,21 +1,21 @@
-from typing import List
 from datetime import datetime, timedelta
+from typing import List
 
 import jwt
-from jwt import PyJWTError
 from fastapi import Depends, FastAPI, HTTPException
-from pydantic import BaseModel, ValidationError
-from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jwt import PyJWTError
+from passlib.context import CryptContext
+from pydantic import BaseModel, ValidationError
 from starlette.status import HTTP_401_UNAUTHORIZED
 
 from fastapi_permissions import (
-    Deny,
     Allow,
-    Everyone,
     Authenticated,
-    list_permissions,
+    Deny,
+    Everyone,
     configure_permissions,
+    list_permissions,
 )
 
 # >>> THIS IS NEW

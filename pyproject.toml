@@ -24,7 +24,7 @@ requires-python = ">=3.6"
 
 [tool.flit.metadata.requires-extra]
 test = [
-    "pytest >=4.0.0",
+    "pytest >= 4.0.0",
     "pytest-cov",
     "pytest-mock",
     "pytest-asyncio",
@@ -34,7 +34,7 @@ dev = [
     "black",
     "flake8",
     "flake8-comprehensions",
-    "isort",
+    "isort >= 5.0.0",
     "keyring",
     "pre-commit",
     "pyjwt",
@@ -60,4 +60,5 @@ exclude = '''
 line_length=79
 multi_line_output=3
 length_sort="True"
+float_to_top="True"
 include_trailing_comma="True"
