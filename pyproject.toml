@@ -28,6 +28,7 @@ test = [
     "pytest-cov",
     "pytest-mock",
     "pytest-asyncio",
+    "pytest-randomly",
     "tox",
 ]
 dev = [
