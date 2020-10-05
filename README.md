@@ -286,7 +286,7 @@ Please note, that ```"permissions:*"``` is the string representation of ```fasta
 
 
 How it works
-============
+------------
 
 The main work is done in the ```has_permissions()``` function, but the most interesting ones (at least for me) are the ```configure_permissions()``` and ```permission_dependency_factory()``` functions.
 
@@ -300,10 +300,9 @@ Or in other words: to have a nice API, the ```Depends()``` in the path operation
 
 
 (F.)A.Q.
-========
+--------
 
-Permission check on collection of resources
--------------------------------------------
+### Permission check on collection of resources
 
 How to use the library with something like this: ```List[Item]=Permission("edit", get_items)```.
 The question was actually issue #3 and I have written a longer answer in the issue, please have a look there.
