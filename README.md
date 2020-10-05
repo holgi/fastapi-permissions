@@ -298,6 +298,17 @@ The ```permission_dependency_factory``` returns another function with the signat
 
 Or in other words: to have a nice API, the ```Depends()``` in the path operation function should only have a function signature for retrieving the active user and the resource. On the other side, when writing the code, I wanted to only specifiy the parts relevant to the path operation function: the resource and the permission. The rest is just on how to make it work.
 
+
+(F.)A.Q.
+========
+
+Permission check on collection of resources
+-------------------------------------------
+
+How to use the library with something like this: ```List[Item]=Permission("edit", get_items)```.
+The question was actually issue #3 and I have written a longer answer in the issue, please have a look there.
+
+
 Dev & Test virtual environment
 ------------------------------
 

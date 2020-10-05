@@ -1,3 +1,10 @@
+0.2.7 - Heartbeat, Oct. 2020
+----------------------------
+
+ - A quick reminder that this is not dead yet.
+ - Added "python-multipart" as a requirement
+
+
 0.2.6 - OpenAPI Tests, Aug. 2020
 --------------------------------
 

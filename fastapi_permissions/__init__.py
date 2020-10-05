@@ -48,7 +48,7 @@ extremely simple and incomplete example:
         return [{"item": item}]
 """
 
-__version__ = "0.2.6"
+__version__ = "0.2.7"
 
 import functools
 import itertools
