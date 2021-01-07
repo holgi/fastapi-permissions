@@ -348,7 +348,7 @@ Thanks
 
 
 [FastApi]: https://fastapi.tiangolo.com/
-[dependency]: https://fastapi.tiangolo.com/tutorial/dependencies/first-steps/
+[dependency]: https://fastapi.tiangolo.com/tutorial/dependencies/
 [pyramid]: https://trypyramid.com
 [pyramid_security]: https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/security.html
-[scopes]: https://fastapi.tiangolo.com/tutorial/security/oauth2-scopes/
+[scopes]: https://fastapi.tiangolo.com/advanced/security/oauth2-scopes/
