@@ -53,6 +53,43 @@ def test_app_get_me(username, client):
     [
         ("/items/", "bob", True),
         ("/items/", "alice", True),
+    ],
+)
+def test_app_items_permissions(url, username, granted, client):
+    """ test urls protected by principals, permissions and acls """
+    response = get_with_user(url, username, client)
+    data = response.json()
+    assert data == [
+      {
+        "items": {
+          "1": {
+            "name": "Stilton",
+            "owner": "bob"
+          },
+          "2": {
+            "name": "Danish Blue",
+            "owner": "alice"
+          }
+        },
+        "available_permissions": {
+          "1": {
+            "use": username == "bob",
+            "view": True
+          },
+          "2": {
+            "use": True,
+            "view": True
+          }
+        }
+      }
+    ]
+    
+    assert response.status_code == 200 if granted else 403
+
+
+@pytest.mark.parametrize(
+    "url, username, granted",
+    [
         ("/item/add", "bob", False),
         ("/item/add", "alice", True),
         ("/item/1", "bob", True),
