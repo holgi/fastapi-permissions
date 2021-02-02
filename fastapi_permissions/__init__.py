@@ -50,6 +50,7 @@ extremely simple and incomplete example:
 
 __version__ = "0.2.7"
 
+from dataclasses import dataclass
 import functools
 import itertools
 from typing import Any
@@ -62,9 +63,44 @@ from starlette.status import HTTP_403_FORBIDDEN
 Allow = "Allow"  # acl "allow" action
 Deny = "Deny"  # acl "deny" action
 
-Everyone = "system:everyone"  # user principal for everyone
-Authenticated = "system:authenticated"  # authenticated user principal
+@dataclass(frozen=True)
+class Principal:
+    method: Any
+    value: Any
 
+Everyone = Principal("system", "everyone")
+Authenticated = Principal("system", "authenticated")
+
+@dataclass(frozen=True)
+class UserPrincipal(Principal):
+    """A principal with the method preset to `"id"`.  Represents the singleton group of users with a given id."""
+    def __init__(self, value, *args, **kwargs):
+        super().__init__("id", value, *args, **kwargs)
+
+@dataclass(frozen=True)
+class RolePrincipal(Principal):
+    """A principal with the method preset to `"role"`.
+
+    Represents the group of users with a given role (e.g. admin)."""
+    def __init__(self, value, *args, **kwargs):
+        super().__init__("role", value, *args, **kwargs)
+
+@dataclass(frozen=True)
+class ActionPrincipal(Principal):
+    """A principal with the method preset to `"action"`
+
+    Represents the group of users who are permitted to perform a given action (e.g. update_blog_posts)"""
+    def __init__(self, value, *args, **kwargs):
+        super().__init__("action", value, *args, **kwargs)
+
+@dataclass(frozen=True)
+class ItemPrincipal:
+    """A principal with an additional `"type"` attribute.
+
+    Represents the group of users that can perform the `"method"` action on the `"value"` instance of the `"type"` item (e.g. ("update", 27, "posts") represents the ability to update post 27)"""
+    method: Any
+    value: Any
+    type: Any
 
 class _AllPermissions:
     """ special container class for the all permissions constant
@@ -178,7 +214,8 @@ def has_permission(
     acl = normalize_acl(resource)
 
     for action, principal, permissions in acl:
-        if isinstance(permissions, str):
+        if isinstance(permissions, str) or \
+                permissions is not All and not hasattr(permissions, "__iter__"):
             permissions = {permissions}
         if requested_permission in permissions:
             if principal in user_principals:
@@ -198,15 +235,31 @@ def list_permissions(user_principals: list, resource: Any):
     acl = normalize_acl(resource)
 
     acl_permissions = (permissions for _, _, permissions in acl)
-    as_iterables = ({p} if not is_like_list(p) else p for p in acl_permissions)
+    as_iterables = (p if is_like_list(p) else {p} for p in acl_permissions)
     permissions = set(itertools.chain.from_iterable(as_iterables))
 
-    return {
-        str(p): has_permission(user_principals, p, acl) for p in permissions
-    }
+    default = False
+    for action, principal, permission in acl:
+        if permission is All and principal in user_principals:
+            default = action == Allow
+            break
+
+    return PermissionSet(
+        {p: has_permission(user_principals, p, acl) \
+            for p in permissions if p is not All},
+        default=default)
 
 
 # utility functions
+
+class PermissionSet(dict):
+    __slots__ = ("default",)
+    def __init__(self, values=(), /, *, default):
+        super().__init__(values)
+        self.default = default
+    def __missing__(self, key): return self.default
+    def __repr__(self):
+        return f"PermissionSet({dict.__repr__(self)}, default={self.default})"
 
 
 def normalize_acl(resource: Any):

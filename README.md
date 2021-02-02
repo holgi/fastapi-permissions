@@ -12,7 +12,7 @@ An extremely simple and incomplete example:
 ```python
 from fastapi import Depends, FastAPI
 from fastapi.security import OAuth2PasswordBearer
-from fastapi_permissions import configure_permissions, Allow, Deny
+from fastapi_permissions import configure_permissions, Allow, Deny, UserPrincipal, RolePrincipal
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -25,15 +25,15 @@ class Item(BaseModel):
     def __acl__(self):
         return [
             (Allow, Authenticated, "view"),
-            (Allow, "role:admin", "edit"),
-            (Allow, f"user:{self.owner}", "delete"),
+            (Allow, RolePrincipal("admin"), "edit"),
+            (Allow, UserPrincipal(f"{self.owner}"), "delete"),
         ]
 
 class User(BaseModel):
     name: str
 
     def principals(self):
-        return [f"user:{self.name}"]
+        return [UserPrincipal(f"{self.name}")]
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     ...
@@ -87,7 +87,7 @@ The system depends on a couple of concepts not found in FastAPI:
 
 - **resources**: objects that provide an *access controll list*
 - **access controll lists**: a list of rules defining which *principal* has what *permission*
-- **principal**: an identifier of a user or his/her associated groups/roles
+- **principal**: an identifier of a user or his/her associated groups/roles.  Can be any type, but usually derived from `Principal`
 - **permission**: an identifier (string) for an action on an object
 
 ### resources & access controll lists
@@ -95,7 +95,7 @@ The system depends on a couple of concepts not found in FastAPI:
 A resource provides an access controll list via it's ```__acl__``` attribute. It can either be an property of an object or a callable. Each entry in the list is a tuple containing three values:
 
 1. an action: ```fastapi_permissions.Allow``` or ```fastapi_permissions.Deny```
-2. a principal: e.g. "role:admin" or "user:bob"
+2. a principal: e.g. RolePrincipal("admin") or UserPrincipal("bob")
 3. a permission or a tuple thereof: e.g. "edit" or ("view", "delete")
 
 Examples:
@@ -106,21 +106,21 @@ from fastapi_permissions import Allow, Deny, Authenticated, Everyone
 class StaticAclResource:
     __acl__ =  [
         (Allow, Everyone, "view"),
-        (Allow, "role:user", "share")
+        (Allow, RolePrincipal("user"), "share")
     ]
 
 class DynamicAclResource:
     def __acl__(self):
         return [
         (Allow, Authenticated, "view"),
-        (Allow, "role:user", "share"),
-        (Allow, f"user:{self.owner}", "edit"),
+        (Allow, RolePrincipal("user"), "share"),
+        (Allow, UserPrincipal(f"{self.owner}"), "edit"),
     ]
 
 # in contrast to pyramid, resources might be access conroll list themselves
 # this can save some typing:
 
-AclResourceAsList = [(Allow, Everyone, "view"), (Deny, "role:troll", "edit")]
+AclResourceAsList = [(Allow, Everyone, "view"), (Deny, RolePrincipal("troll"), "edit")]
 ```
 
 You don't need to add any "deny-all-clause" at the end of the access controll list, this is automagically implied. All entries in a ACL are checked in *the order provided in the list*. This makes some complex configurations simple, but can sometimes be a pain in the lower back…
@@ -129,7 +129,7 @@ The two principals ```Everyone``` and ```Authenticated``` will be discussed in s
 
 ### users & principal identifiers
 
-You **must provide** a function that returns the principals of the current active user. The principals is just a list of strings, identifying the user and groups/roles the user belongs to:
+You **must provide** a function that returns the principals of the current active user. The principals are just a list of objects, identifying the user and groups/roles the user belongs to.  They can be constructed from the provided `Principal` dataclass:
 
 Example:
 
@@ -216,7 +216,7 @@ def get_active_principals(...):
     """ returns the principals of the current logged in user"""
     ...
 
-example_acl = [(Allow, "role:user", "view")]
+example_acl = [(Allow, UserPrincipal("user"), "view")]
 
 # Permission is already wrapped in Depends()
 Permission = configure_permissions(get_active_principals)
@@ -263,26 +263,26 @@ from fastapi_permissions import (
     has_permission, Allow, All, Everyone, Authenticated
 )
 
-user_principals == [Everyone, Authenticated, "role:owner", "user:bob"]
-apple_acl == [(Allow, "role:owner", All)]
+user_principals == [Everyone, Authenticated, RolePrincipal("owner"), UserPrincipal("bob")]
+apple_acl == [(Allow, RolePrincipal("owner"), All)]
 
 if has_permission(user_principals, "eat", apple_acl):
     print "Yum!"
 ```
 
-The other function provided is ```list_permissions(user_principals, resource)``` this will return a dict of all available permissions and a boolean value if the permission is granted or denied:
+The other function provided is ```list_permissions(user_principals, resource)``` which returns a PermissionSet mapping all available permissions for the given resource to a boolean value representing if the permission is granted or denied.  The `default` attribute of the permission set specifies whether unlisted permissions are granted or denied by default.  The default is to deny, but can be overridden through the use of the `All` permission.
 
 ```python
-from fastapi_permissions import list_permissions, Allow, All
+from fastapi_permissions import list_permissions, Allow, All, Everyone, Authenticated, RolePrincipal, UserPrincipal
 
-user_principals == [Everyone, Authenticated, "role:owner", "user:bob"]
-apple_acl == [(Allow, "role:owner", All)]
+user_principals = [Everyone, Authenticated, RolePrincipal("owner"), UserPrincipal("bob")]
+apple_acl = [(Allow, RolePrincipal("owner"), All)]
 
 print(list_permissions(user_principals, apple_acl))
-{"permissions:*": True}
+PermissionSet({}, default=True)
 ```
 
-Please note, that ```"permissions:*"``` is the string representation of ```fastapi_permissions.All```.
+Note that the `default` attribute of the `PermissionSet` indicates whether the default behaviour is to allow or deny unlisted permissions.
 
 
 How it works

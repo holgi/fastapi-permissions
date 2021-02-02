@@ -16,6 +16,8 @@ from fastapi_permissions import (
     Everyone,
     configure_permissions,
     list_permissions,
+    UserPrincipal,
+    RolePrincipal
 )
 
 # >>> THIS IS NEW
@@ -49,7 +51,7 @@ fake_users_db = {
         "email": "bob@example.com",
         "hashed_password": pwd_context.hash("secret"),
         # >>> THIS IS NEW
-        "principals": ["user:bob", "role:admin"],
+        "principals": [UserPrincipal("bob"), RolePrincipal("admin")],
         # <<<
     },
     "alice": {
@@ -58,7 +60,7 @@ fake_users_db = {
         "email": "alicechains@example.com",
         "hashed_password": pwd_context.hash("secret"),
         # >>> THIS IS NEW
-        "principals": ["user:alice"],
+        "principals": [UserPrincipal("alice")],
         # <<<
     },
 }
@@ -80,9 +82,8 @@ class User(BaseModel):
 
     # >>> THIS IS NEW
     # just reflects the changes in the fake_user_db
-    principals: List[str] = []
+    principals: list = []
     # <<<
-
 
 class UserInDB(User):
     hashed_password: str
@@ -168,14 +169,14 @@ class Item(BaseModel):
         the function returns a list containing tuples in the form of
         (Allow or Deny, principal identifier, permission name)
 
-        If a role is not listed (like "role:user") the access will be
+        If a role is not listed (like RolePrincipal("user")) the access will be
         automatically deny. It's like a (Deny, Everyone, All) is automatically
         appended at the end.
         """
         return [
             (Allow, Authenticated, "view"),
-            (Allow, "role:admin", "use"),
-            (Allow, f"user:{self.owner}", "use"),
+            (Allow, RolePrincipal("admin"), "use"),
+            (Allow, UserPrincipal(f"{self.owner}"), "use"),
         ]
 
 
@@ -189,7 +190,7 @@ class ItemListResource:
 
 # you can even use just a list
 
-NewItemAcl = [(Deny, "user:bob", "create"), (Allow, Authenticated, "create")]
+NewItemAcl = [(Deny, UserPrincipal("bob"), "create"), (Allow, Authenticated, "create")]
 
 
 # the current user is determined by the "get_current_user" function.

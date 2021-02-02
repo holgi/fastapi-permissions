@@ -1,8 +1,9 @@
 """ Tests the main api functions """
 
 import inspect
-
 import pytest
+
+from fastapi_permissions import UserPrincipal, RolePrincipal, ActionPrincipal, All
 
 
 def dummy_principal_callable():
@@ -22,13 +23,15 @@ class DummyUser:
             self.principals.append(Authenticated)
 
     def __repr__(self):
-        return self.principals[0]
+        return "<DummyUser(principals={})>".format(str(self.principals))
 
-
-dummy_user_john = DummyUser(["user:john", "role:user"])
-dummy_user_jane = DummyUser(["user:jane", "role:user", "role:moderator"])
-dummy_user_alice = DummyUser(["user:alice", "role:admin"])
+dummy_user_john = DummyUser([UserPrincipal("john"), RolePrincipal("user")])
+dummy_user_jane = DummyUser([UserPrincipal("jane"), RolePrincipal("user"),
+    RolePrincipal("moderator")])
+dummy_user_alice = DummyUser([UserPrincipal("alice"), RolePrincipal("admin")])
 dummy_user_bob = DummyUser([])
+dummy_user_edd = DummyUser([UserPrincipal("john"), RolePrincipal("user"),
+    RolePrincipal("denied"), ActionPrincipal("perform_action")])
 
 
 @pytest.fixture
@@ -36,15 +39,19 @@ def acl_fixture():
     from fastapi_permissions import All, Deny, Allow, Everyone, Authenticated
 
     yield [
-        (Allow, "user:john", "view"),
-        (Allow, "user:john", "edit"),
-        (Allow, "user:jane", ("edit", "use")),
-        (Deny, "role:user", "create"),
-        (Allow, "role:moderator", "delete"),
+        (Allow, UserPrincipal("john"), "view"),
+        (Allow, UserPrincipal("john"), "edit"),
+        (Allow, UserPrincipal("jane"), ("edit", "use")),
+        (Deny, RolePrincipal("user"), "create"),
+        (Allow, RolePrincipal("moderator"), "delete"),
         (Deny, Authenticated, "copy"),
-        (Allow, "role:admin", All),
+        (Allow, RolePrincipal("admin"), All),
+        (Deny, RolePrincipal("admin"), All),
         (Allow, Everyone, "share"),
-        (Allow, "role:moderator", "share"),
+        (Deny, RolePrincipal("denied"), All),
+        (Allow, RolePrincipal("denied"), All),
+        (Allow, RolePrincipal("moderator"), "share"),
+        (Allow, ActionPrincipal("perform_action"), "act"),
     ]
 
 
@@ -57,7 +64,7 @@ permission_results = {
         "delete": False,
         "share": True,
         "copy": False,
-        "permissions:*": False,
+        "act": False,
     },
     dummy_user_jane: {
         "view": False,
@@ -67,7 +74,7 @@ permission_results = {
         "delete": True,
         "share": True,
         "copy": False,
-        "permissions:*": False,
+        "act": False,
     },
     dummy_user_alice: {
         "view": True,
@@ -77,7 +84,7 @@ permission_results = {
         "delete": True,
         "share": True,
         "copy": False,
-        "permissions:*": True,
+        "act": True,
     },
     dummy_user_bob: {
         "view": False,
@@ -87,8 +94,26 @@ permission_results = {
         "delete": False,
         "share": True,
         "copy": False,
-        "permissions:*": False,
+        "act": False,
     },
+    dummy_user_edd: {
+        "view": True,
+        "edit": True,
+        "use": False,
+        "create": False,
+        "delete": False,
+        "share": False,
+        "copy": False,
+        "act": True,
+    },
+}
+
+has_all_permission = {
+    dummy_user_john: False,
+    dummy_user_jane: False,
+    dummy_user_alice: True,
+    dummy_user_bob: False,
+    dummy_user_edd: False,
 }
 
 
@@ -243,7 +268,7 @@ def test_permission_dependency_raises_exception(mocker):
 )
 @pytest.mark.parametrize(
     "permission",
-    ["view", "edit", "use", "create", "delete", "share", "copy", "nuke"],
+    ["view", "edit", "use", "create", "delete", "share", "copy", "nuke", "act"],
 )
 def test_has_permission(user, permission, acl_fixture):
     """ tests the has_permission function """
@@ -251,8 +276,10 @@ def test_has_permission(user, permission, acl_fixture):
 
     result = has_permission(user.principals, permission, acl_fixture)
 
-    key = "permissions:*" if permission == "nuke" else permission
-    assert result == permission_results[user][key]
+    if permission == "nuke":
+        assert result == has_all_permission[user]
+    else:
+        assert result == permission_results[user][permission]
 
 
 @pytest.mark.parametrize(
@@ -265,4 +292,13 @@ def test_list_permissions(user, acl_fixture):
 
     result = list_permissions(user.principals, acl_fixture)
 
+    assert result.default == has_all_permission[user]
     assert result == permission_results[user]
+
+
+@pytest.mark.asyncio
+async def test_permission_set_creation():
+    """ raise an error if permission set repr fails """
+    from fastapi_permissions import PermissionSet
+    p = PermissionSet(default=True)
+    assert p.__repr__() == "PermissionSet({}, default=True)"
