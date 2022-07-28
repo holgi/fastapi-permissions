@@ -180,6 +180,8 @@ def has_permission(
     for action, principal, permissions in acl:
         if isinstance(permissions, str):
             permissions = {permissions}
+        if not is_like_list(permissions):
+            permissions = {permissions}
         if requested_permission in permissions:
             if principal in user_principals:
                 return action == Allow
