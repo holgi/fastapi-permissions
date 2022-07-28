@@ -30,6 +30,7 @@ dummy_user_jane = DummyUser(["user:jane", "role:user", "role:moderator"])
 dummy_user_alice = DummyUser(["user:alice", "role:admin"])
 dummy_user_bob = DummyUser([])
 
+
 @pytest.fixture
 def acl_fixture():
     from fastapi_permissions import All, Deny, Allow, Everyone, Authenticated
