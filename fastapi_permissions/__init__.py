@@ -178,8 +178,6 @@ def has_permission(
     acl = normalize_acl(resource)
 
     for action, principal, permissions in acl:
-        if isinstance(permissions, str):
-            permissions = {permissions}
         if not is_like_list(permissions):
             permissions = {permissions}
         if requested_permission in permissions:
