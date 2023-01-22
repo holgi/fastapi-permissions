@@ -52,7 +52,7 @@ __version__ = "0.2.7"
 
 import functools
 import itertools
-from typing import Any
+from typing import Any, Dict, List
 
 from fastapi import Depends, HTTPException
 from starlette.status import HTTP_403_FORBIDDEN
@@ -73,11 +73,11 @@ class _AllPermissions:
     but it turns out to be readonly...
     """
 
-    def __contains__(self, other):
+    def __contains__(self, other: Any) -> bool:
         """ returns alway true any permission """
         return True
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ string representation """
         return "permissions:*"
 
@@ -101,7 +101,7 @@ permission_exception = HTTPException(
 def configure_permissions(
     active_principals_func: Any,
     permission_exception: HTTPException = permission_exception,
-):
+) -> functools.partial:
     """ sets the basic configuration for the permissions system
 
     active_principals_func:
@@ -126,7 +126,7 @@ def permission_dependency_factory(
     resource: Any,
     active_principals_func: Any,
     permission_exception: HTTPException,
-):
+) -> Any:
     """ returns a function that acts as a dependable for checking permissions
 
     This is the actual function used for creating the permission dependency,
@@ -152,9 +152,7 @@ def permission_dependency_factory(
     # to get the caller signature right, we need to add only the resource and
     # user dependable in the definition
     # the permission itself is available through the outer function scope
-    def permission_dependency(
-        resource=dependable_resource, principals=active_principals_func
-    ):
+    def permission_dependency(resource: Any = dependable_resource, principals: Any = active_principals_func) -> Any:
         if has_permission(principals, permission, resource):
             return resource
         raise permission_exception
@@ -164,7 +162,7 @@ def permission_dependency_factory(
 
 def has_permission(
     user_principals: list, requested_permission: str, resource: Any
-):
+) -> bool:
     """ checks if a user has the permission for a resource
 
     The order of the function parameters can be remembered like "Joe eat apple"
@@ -186,7 +184,7 @@ def has_permission(
     return False
 
 
-def list_permissions(user_principals: list, resource: Any):
+def list_permissions(user_principals: list, resource: Any) -> Dict[str, bool]:
     """ lists all permissions of a user for a resouce
 
     user_principals: the principals of a user
@@ -209,7 +207,7 @@ def list_permissions(user_principals: list, resource: Any):
 # utility functions
 
 
-def normalize_acl(resource: Any):
+def normalize_acl(resource: Any) -> List[Any]:
     """ returns the access controll list for a resource
 
     If the resource is not an acl list itself it needs to have an "__acl__"
@@ -229,7 +227,7 @@ def normalize_acl(resource: Any):
     return []
 
 
-def is_like_list(something):
+def is_like_list(something) -> bool:
     """ checks if something is iterable but not a string """
     if isinstance(something, str):
         return False

@@ -1,0 +1,48 @@
+__version__: str
+
+import functools
+from typing import Any, Dict, List, Tuple
+
+from fastapi import HTTPException
+
+Allow: str
+Deny: str
+
+Everyone: str
+Authenticated: str
+
+class _AllPermissions:
+    def __contains__(self, other: Any) -> bool: ...
+    def __str__(self) -> str: ...
+
+All: Any
+
+DENY_ALL: Tuple[Any, Any, Any]
+ALOW_ALL: Tuple[Any, Any, Any]
+
+permission_exception: HTTPException
+
+def configure_permissions(
+    active_principals_func: Any,
+    permission_exception: HTTPException,
+) -> functools.partial: ...
+
+def permission_dependency_factory(
+    permission: str,
+    resource: Any,
+    active_principals_func: Any,
+    permission_exception: HTTPException,
+) -> Any:
+    ...
+
+    def permission_dependency(resource: Any, principals: Any) -> Any: ...
+
+def has_permission(
+    user_principals: list, requested_permission: str, resource: Any
+) -> bool: ...
+
+def list_permissions(user_principals: list, resource: Any) -> Dict[str, bool]: ...
+
+def normalize_acl(resource: Any) -> List[Any]: ...
+
+def is_like_list(something: Any) -> bool: ...
