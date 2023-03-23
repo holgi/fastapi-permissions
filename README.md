@@ -123,7 +123,7 @@ class DynamicAclResource:
 AclResourceAsList = [(Allow, Everyone, "view"), (Deny, "role:troll", "edit")]
 ```
 
-You don't need to add any "deny-all-clause" at the end of the access controll list, this is automagically implied. All entries in a ACL are checked in *the order provided in the list*. This makes some complex configurations simple, but can sometimes be a pain in the lower back…
+You don't need to add any "deny-all-clause" at the end of the access controll list, this is automatically implied. All entries in a ACL are checked in *the order provided in the list*. This makes some complex configurations simple, but can sometimes be a pain in the lower back…
 
 The two principals ```Everyone``` and ```Authenticated``` will be discussed in short time.
 
@@ -351,4 +351,4 @@ Thanks
 [dependency]: https://fastapi.tiangolo.com/tutorial/dependencies/first-steps/
 [pyramid]: https://trypyramid.com
 [pyramid_security]: https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/security.html
-[scopes]: https://fastapi.tiangolo.com/tutorial/security/oauth2-scopes/
+[scopes]: https://fastapi.tiangolo.com/tutorial/security/simple-oauth2/
